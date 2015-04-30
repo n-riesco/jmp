@@ -19,11 +19,12 @@ Example of parsing and replying to a message (taken from
 [IJavascript](https://github.com/n-riesco/ijavascript)):
 
 ```javascript
-this.shellSocket.on("message", (function() {
-    var Message = require("jmp");
+var jmp = require("jmp");
 
+// listen for Jupyter messages
+this.shellSocket.on("message", (function() {
     // parse the request message
-    var request = new Message(
+    var request = new jmp.Message(
         arguments,
         "sha256",
         "f388c63a-9fb9-4ee9-83f0-1bb790ffc7c7"
@@ -36,8 +37,8 @@ this.shellSocket.on("message", (function() {
     var msg_type = request.header.msg_type;
     var content = request.content;
 
-    // set up the response msg_type and content
-    // ..
+    // set msg_type and content for response
+    // [...]
 
     // respond
     request.respond(this.shellSocket, msg_type, content);

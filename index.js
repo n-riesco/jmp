@@ -37,15 +37,18 @@
 /**
  * @module jmp
  *
- * @description Module `jmp` provides class `Message` to create, parse and reply
- * to messages of the IPython/Jupyter protocol.
+ * @description Module `jmp` provides class `Message` for creating, parsing and
+ * replying to messages of the Jupyter protocol.
  *
  * @example
  *
  * // Example of parsing and replying to a message:
+ * var jmp = require("jmp");
+ *
+ * // listen for Jupyter messages
  * this.shellSocket.on("message", (function() {
  *     // parse the request message
- *     var request = new Message(
+ *     var request = new jmp.Message(
  *         arguments,
  *         "sha256",
  *         "f388c63a-9fb9-4ee9-83f0-1bb790ffc7c7"
@@ -58,7 +61,7 @@
  *     var msg_type = request.header.msg_type;
  *     var content = request.content;
  *
- *     // set up the response msg_type and content
+ *     // set msg_type and content for response
  *     // ..
  *
  *     // respond
