@@ -1,0 +1,32 @@
+{
+    "name": "jmp",
+    "version": "0.0.1",
+    "description": "Node.js module for creating, parsing and replying to messages of the Jupyter protocol",
+    "keywords": [
+        "jupyter",
+        "messaging",
+        "protocol",
+        "ijavascript"
+    ],
+    "author": {
+        "author": "Nicolas Riesco",
+        "email": "enquiries@nicolasriesco.net",
+        "url": "http://www.nicolasriesco.net/"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/n-riesco/jmp.git"
+    },
+    "license": "BSD-3-Clause",
+    "dependencies": {
+        "node-uuid": "^1.4.2"
+    },
+    "devDependencies": {
+        "jsdoc": "latest",
+        "jshint": "latest"
+    },
+    "scripts": {
+        "doc": "jsdoc -R README.md -d doc index.js",
+        "lint": "jshint index.js"
+    }
+}
