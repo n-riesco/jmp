@@ -35,9 +35,9 @@
  */
 
 /**
- * @module jp
+ * @module jmp
  *
- * @description Module `jp` provides class `Message` to create, parse and reply
+ * @description Module `jmp` provides class `Message` to create, parse and reply
  * to messages of the IPython/Jupyter protocol.
  *
  * @example
@@ -102,7 +102,7 @@ function Message(requestArguments, scheme, key) {
             this.parse(requestArguments);
         } catch (e) {
             console.error(
-                "JP: REQUEST: Failed to parse msg", requestArguments, e.stack
+                "JMP: REQUEST: Failed to parse msg", requestArguments, e.stack
             );
         }
     }
@@ -125,11 +125,11 @@ Message.prototype.parse = function(requestArguments) {
         this.idents.push(part);
     }
     if (requestArguments.length - i < 5) {
-        console.warn("JP: REQUEST: Not enough msg parts", requestArguments);
+        console.warn("JMP: REQUEST: Not enough msg parts", requestArguments);
         return;
     }
     if (requestArguments[i].toString() !== DELIMITER) {
-        console.warn("JP: REQUEST: Invalid msg", requestArguments);
+        console.warn("JMP: REQUEST: Invalid msg", requestArguments);
         return;
     }
 
@@ -158,7 +158,7 @@ Message.prototype.parse = function(requestArguments) {
     this.content = toJSON(requestArguments[i + 5]);
     this.blobs = Array.prototype.slice.apply(requestArguments, [i + 6]);
 
-    if (DEBUG) console.log("JP: REQUEST:", this);
+    if (DEBUG) console.log("JMP: REQUEST:", this);
 };
 
 /**
@@ -198,7 +198,7 @@ Message.prototype.respond = function(socket, messageType, content) {
         content, // content
     ]);
 
-    if (DEBUG) console.log("JP: RESPONSE:", response);
+    if (DEBUG) console.log("JMP: RESPONSE:", response);
 
     socket.send(response);
 };
