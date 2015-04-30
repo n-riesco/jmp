@@ -66,7 +66,9 @@
  * }).bind(this));
  *
  */
-module.exports = Message;
+module.exports = {
+    Message: Message,
+};
 
 var DEBUG = global.DEBUG || false;
 var DELIMITER = '<IDS|MSG>';
