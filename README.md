@@ -1,8 +1,8 @@
 # `jmp`
 
 `jmp` is an [npm module](https://www.npmjs.com/) for creating, parsing and
-replying to messages of the [Jupyter
-protocol](http://ipython.org/ipython-doc/stable/development/messaging.html).
+replying to messages of the [Jupyter Messaging
+Protocol](http://ipython.org/ipython-doc/stable/development/messaging.html).
 
 Please, consider this repository as an alpha release. The API is likely to
 change.
@@ -15,20 +15,24 @@ npm install jmp
 
 ## Usage
 
-Example of parsing and replying to a message (taken from
+Example of parsing and replying to a message (adapted from
 [IJavascript](https://github.com/n-riesco/ijavascript)):
 
 ```javascript
 var jmp = require("jmp");
 
-// listen for Jupyter messages
-this.shellSocket.on("message", (function() {
-    // parse the request message
-    var request = new jmp.Message(
-        arguments,
-        "sha256",
-        "f388c63a-9fb9-4ee9-83f0-1bb790ffc7c7"
-    );
+// `jmp.Socket` inherits from ZMQ's Socket,
+// and thus it can be used where a ZMQ Socket is used.
+// `jmp.Socket` wraps listeners of "message" events,
+// so that they receive an instance of `jmp.Message`.
+var shellSocket = new jmp.Socket(
+    "router",                               \\ ZMQ socket type
+    "sha256",                               \\ Hashing scheme
+    "f388c63a-9fb9-4ee9-83f0-1bb790ffc7c7"  \\ Hashing key
+);
+
+shellSocket.on("message", function(request) {
+    // `request` is an instance of `jmp.Message`
 
     // check the request signature is valid
     if (!msg.signatureOK) return;
@@ -41,8 +45,8 @@ this.shellSocket.on("message", (function() {
     // [...]
 
     // respond
-    request.respond(this.shellSocket, msg_type, content);
-}).bind(this));
+    request.respond(shellSocket, msg_type, content);
+});
 ```
 
 # Contributions
