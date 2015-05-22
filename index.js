@@ -144,7 +144,7 @@ Message.prototype.parse = function(requestArguments) {
 
     if (this.key === '') {
         // no key, messages aren't signed
-        this.signatureOK = (this.signature === '');
+        this.signatureOK = true;
     } else {
         this.signature = requestArguments[i + 1].toString();
         var hmac = crypto.createHmac(this.scheme, this.key);
@@ -155,7 +155,10 @@ Message.prototype.parse = function(requestArguments) {
         this.signatureOK = (this.signature === hmac.digest("hex"));
     }
 
-    if (!this.signatureOK) return;
+    if (!this.signatureOK) {
+        console.error("Incorrect message signature:", this.signature);
+        return;
+    }
 
     function toJSON(value) {
         return JSON.parse(value.toString());
