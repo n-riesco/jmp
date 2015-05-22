@@ -111,7 +111,7 @@ function Message(requestArguments, scheme, key) {
             this.parse(requestArguments);
         } catch (e) {
             console.error(
-                "JMP: REQUEST: Failed to parse msg", requestArguments, e.stack
+                "JMP: MESSAGE: Failed to parse msg", requestArguments, e.stack
             );
         }
     }
@@ -134,11 +134,13 @@ Message.prototype.parse = function(requestArguments) {
         this.idents.push(part);
     }
     if (requestArguments.length - i < 5) {
-        console.warn("JMP: REQUEST: Not enough msg parts", requestArguments);
+        console.error(
+            "JMP: MESSAGE: PARSE: Not enough msg parts", requestArguments
+        );
         return;
     }
     if (requestArguments[i].toString() !== DELIMITER) {
-        console.warn("JMP: REQUEST: Invalid msg", requestArguments);
+        console.error("JMP: MESSAGE: PARSE: Invalid msg", requestArguments);
         return;
     }
 
@@ -156,7 +158,9 @@ Message.prototype.parse = function(requestArguments) {
     }
 
     if (!this.signatureOK) {
-        console.error("Incorrect message signature:", this.signature);
+        console.error(
+            "JMP: MESSAGE: PARSE: Incorrect message signature:", this.signature
+        );
         return;
     }
 
@@ -170,7 +174,7 @@ Message.prototype.parse = function(requestArguments) {
     this.content = toJSON(requestArguments[i + 5]);
     this.blobs = Array.prototype.slice.apply(requestArguments, [i + 6]);
 
-    if (DEBUG) console.log("JMP: REQUEST:", this);
+    if (DEBUG) console.log("JMP: MESSAGE: PARSE:", this);
 };
 
 /**
@@ -225,7 +229,7 @@ Message.prototype.respond = function(
         content, // content
     ]);
 
-    if (DEBUG) console.log("JMP: RESPONSE:", response);
+    if (DEBUG) console.log("JMP: MESSAGE: RESPOND:", response);
 
     socket.send(response);
 };
