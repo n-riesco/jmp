@@ -72,6 +72,11 @@
 module.exports = {
     Message: Message,
     Socket: Socket,
+
+    /**
+     * ZeroMQ bindings
+     */
+    zmq: require("zmq"),
 };
 
 var DEBUG = global.DEBUG || false;
