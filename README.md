@@ -35,7 +35,7 @@ shellSocket.on("message", function(request) {
     // `request` is an instance of `jmp.Message`
 
     // check the request signature is valid
-    if (!msg.signatureOK) return;
+    if (!request.signatureOK) return;
 
     // do something with the request
     var msg_type = request.header.msg_type;
