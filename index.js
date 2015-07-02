@@ -243,6 +243,46 @@ Message.prototype.respond = function(
     socket.send(response);
 };
 
+Message.prototype.fill = function(newValues) {
+    this.idents = newValues.idents || this.idents;
+    this.header = newValues.header || this.header;
+    this.parentHeader = newValues.parentHeader || this.parentHeader;
+    this.metadata = newValues.metadata || this.metadata;
+    this.content = newValues.content || this.content;
+}
+
+Message.prototype.sign = function(
+    scheme, key
+) {
+    var scheme = scheme || this.scheme;
+    var key = key || this.key;
+
+    var idents = this.idents || [];
+    var header = JSON.stringify(this.header) || JSON.stringify({});
+    var parentHeader = JSON.stringify(this.parentHeader) || JSON.stringify({});
+    var metadata = JSON.stringify(this.metadata) || JSON.stringify({});
+    var content = JSON.stringify(this.content) || JSON.stringify({});
+
+    var signature = '';
+    if (key !== '') {
+        var hmac = crypto.createHmac(scheme, key);
+        hmac.update(header);
+        hmac.update(parentHeader);
+        hmac.update(metadata);
+        hmac.update(content);
+        signature = hmac.digest("hex");
+    }
+
+    return idents.concat([ // idents
+        DELIMITER, // delimiter
+        signature, // HMAC signature
+        header, // header
+        parentHeader, // parent header
+        metadata, // metadata
+        content, // content
+    ]);
+};
+
 /**
  * @class
  * @classdesc ZMQ socket that parses the Jupyter Messaging Protocol
