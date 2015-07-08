@@ -197,6 +197,23 @@ Message.prototype.parse = function(requestArguments) {
 Message.prototype.respond = function(
     socket, messageType, responseContent, protocolVersion
 ) {
+    var signedResponse = this.buildResponse(
+        messageType, responseContent, protocolVersion
+    );
+
+    return socket.send(signedResponse);
+}
+
+/**
+ * build and sign a response
+ *
+ * @param {String} messageType       IPython/Jupyter message type
+ * @param {Object} responseContent   IPython/Jupyter response content
+ * @param {String} [protocolVersion] IPython/Jupyter protocol version
+ */
+Message.prototype.buildResponse = function(
+    messageType, responseContent, protocolVersion
+) {
     var idents = this.idents;
 
     var header = {
@@ -213,15 +230,41 @@ Message.prototype.respond = function(
     }
     header = JSON.stringify(header);
 
-    var parentHeader = JSON.stringify(this.header);
+    var responseMessage = new Message();
+    responseMessage.fill({
+        idents: this.idents,
+        header: header,
+        parentHeader: this.header,
+        metadata: {},
+        content: responseContent,
+    })
 
-    var metadata = JSON.stringify({});
+    return responseMessage.sign();
+}
 
-    var content = JSON.stringify(responseContent);
+Message.prototype.fill = function(newValues) {
+    this.idents = newValues.idents || this.idents;
+    this.header = newValues.header || this.header;
+    this.parentHeader = newValues.parentHeader || this.parentHeader;
+    this.metadata = newValues.metadata || this.metadata;
+    this.content = newValues.content || this.content;
+}
+
+Message.prototype.sign = function(
+    scheme, key
+) {
+    var scheme = scheme || this.scheme;
+    var key = key || this.key;
+
+    var idents = this.idents || [];
+    var header = JSON.stringify(this.header) || JSON.stringify({});
+    var parentHeader = JSON.stringify(this.parentHeader) || JSON.stringify({});
+    var metadata = JSON.stringify(this.metadata) || JSON.stringify({});
+    var content = JSON.stringify(this.content) || JSON.stringify({});
 
     var signature = '';
-    if (this.key !== '') {
-        var hmac = crypto.createHmac(this.scheme, this.key);
+    if (key !== '') {
+        var hmac = crypto.createHmac(scheme, key);
         hmac.update(header);
         hmac.update(parentHeader);
         hmac.update(metadata);
@@ -229,7 +272,7 @@ Message.prototype.respond = function(
         signature = hmac.digest("hex");
     }
 
-    var response = idents.concat([ // idents
+    return idents.concat([ // idents
         DELIMITER, // delimiter
         signature, // HMAC signature
         header, // header
@@ -237,10 +280,6 @@ Message.prototype.respond = function(
         metadata, // metadata
         content, // content
     ]);
-
-    if (DEBUG) console.log("JMP: MESSAGE: RESPOND:", response);
-
-    socket.send(response);
 };
 
 /**
