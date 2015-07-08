@@ -42,7 +42,6 @@ var crypto = require("crypto");
 var uuid = require("node-uuid");
 
 var jmp = require("jmp");
-jmp.Message.prototype.sendTo = jmpMessageSendTo;
 var zmq = jmp.zmq;
 
 /**
@@ -116,7 +115,7 @@ function createContext(context, tests) {
     for (var attempts = 0;; attempts++) {
         var randomPort = Math.floor(1024 + Math.random() * (65536 - 1024));
         var address = "tcp://127.0.0.1:" + randomPort;
-        
+
         try {
             context.serverSocket.bindSync(address);
             context.clientSocket.connect(address);
@@ -154,8 +153,6 @@ function testCommunication(context, tests) {
     var responseMsgType = "kernel_info_reply";
 
     var request = new jmp.Message();
-    request.scheme = context.scheme;
-    request.key = context.key;
     request.idents = [];
     request.header = {
         "msg_id": uuid.v4(),
@@ -184,6 +181,7 @@ function testCommunication(context, tests) {
             "url": "https://github.com/n-riesco/nel",
         }],
     };
+    var responseMetadata = {};
 
     context.serverSocket.on("message", getRequest);
     context.clientSocket.on("message", getResponse);
@@ -191,11 +189,14 @@ function testCommunication(context, tests) {
     startTest();
 
     function startTest() {
-        request.sendTo(context.clientSocket);
+        context.clientSocket.send(request);
     }
 
     function respondToRequest(message) {
-        message.respond(context.serverSocket, responseMsgType, responseContent);
+        message.respond(
+            context.serverSocket,
+            responseMsgType, responseContent, responseMetadata
+        );
     }
 
     function endTest() {
@@ -206,10 +207,6 @@ function testCommunication(context, tests) {
     }
 
     function getRequest(message) {
-        assert(
-            message.signatureOK,
-            makeErrorMessage("request.signatureOK", message.signatureOK, true)
-        );
         assert.equal(
             message.idents[0],
             context.clientSocket.getsockopt(zmq.ZMQ_IDENTITY),
@@ -247,10 +244,6 @@ function testCommunication(context, tests) {
     }
 
     function getResponse(message) {
-        assert(
-            message.signatureOK,
-            makeErrorMessage("response.signatureOK", message.signatureOK, true)
-        );
         assert.equal(
             message.idents.length,
             0,
@@ -288,36 +281,4 @@ function testCommunication(context, tests) {
             "Expected", expected,
         ].join(": ");
     }
-}
-
-function jmpMessageSendTo(socket) {
-    var idents = this.idents;
-
-    var header = JSON.stringify(this.header);
-    var parentHeader = JSON.stringify(this.parentHeader);
-    var metadata = JSON.stringify(this.metadata);
-    var content = JSON.stringify(this.content);
-
-    var signature = '';
-    if (this.key !== '') {
-        var hmac = crypto.createHmac(this.scheme, this.key);
-        hmac.update(header);
-        hmac.update(parentHeader);
-        hmac.update(metadata);
-        hmac.update(content);
-        signature = hmac.digest("hex");
-    }
-
-    var message = idents.concat([ // idents
-        "<IDS|MSG>", // delimiter
-        signature, // HMAC signature
-        header, // header
-        parentHeader, // parent header
-        metadata, // metadata
-        content, // content
-    ]);
-
-    if (DEBUG) console.log("JMP: MESSAGE: SEND:", message);
-
-    socket.send(message);
 }

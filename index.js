@@ -58,139 +58,170 @@ var DELIMITER = '<IDS|MSG>';
 var console = require("console");
 var crypto = require("crypto");
 var uuid = require("node-uuid");
-var zmq = require("zmq");
+var zmq = module.exports.zmq;
 
 /**
+ * Jupyter message
  * @class
- * @classdesc Implements an IPython message
- *
- * @param {argsArray} [requestArguments]      argsArray of the callback
- *                                            listening on the {@link
- *                                            Kernel#shellSocket Shell socket}
- * @param {String}    [scheme=sha256]         Hashing scheme
- * @param {String}    [key=""]                Hashing key
  */
-function Message(requestArguments, scheme, key) {
-    this.idents = undefined;
-    this.signature = undefined;
-    this.header = undefined;
-    this.parentHeader = undefined;
-    this.metadata = undefined;
-    this.content = undefined;
-    this.blobs = undefined;
-
-    this.scheme = scheme || "sha256";
-    this.key = key || "";
-
-    this.signatureOK = undefined;
-
-    if (requestArguments !== undefined) {
-        try {
-            this.parse(requestArguments);
-        } catch (e) {
-            console.error(
-                "JMP: MESSAGE: Failed to parse msg", requestArguments, e.stack
-            );
-        }
-    }
-}
-
-/**
- * Parse a request
- *
- * @param {argsArray} requestArguments argsArray of the callback listening on
- * the {@link Kernel#shellSocket Shell socket}
- */
-Message.prototype.parse = function(requestArguments) {
-    var i = 0;
+function Message() {
+    /**
+     * ZMQ identities
+     * @member {Array}
+     */
     this.idents = [];
-    for (i = 0; i < requestArguments.length; i++) {
-        var part = requestArguments[i];
-        if (part.toString() === DELIMITER) {
-            break;
-        }
-        this.idents.push(part);
-    }
-    if (requestArguments.length - i < 5) {
-        console.error(
-            "JMP: MESSAGE: PARSE: Not enough msg parts", requestArguments
-        );
-        return;
-    }
-    if (requestArguments[i].toString() !== DELIMITER) {
-        console.error("JMP: MESSAGE: PARSE: Invalid msg", requestArguments);
-        return;
-    }
 
-    if (this.key === '') {
-        // no key, messages aren't signed
-        this.signatureOK = true;
-    } else {
-        this.signature = requestArguments[i + 1].toString();
-        var hmac = crypto.createHmac(this.scheme, this.key);
-        hmac.update(requestArguments[i + 2]);
-        hmac.update(requestArguments[i + 3]);
-        hmac.update(requestArguments[i + 4]);
-        hmac.update(requestArguments[i + 5]);
-        this.signatureOK = (this.signature === hmac.digest("hex"));
-    }
+    /**
+     * @member {Object}
+     */
+    this.header = {};
 
-    if (!this.signatureOK) {
-        console.error(
-            "JMP: MESSAGE: PARSE: Incorrect message signature:", this.signature
-        );
-        return;
-    }
+    /**
+     * @member {Object}
+     */
+    this.parentHeader = {};
 
-    function toJSON(value) {
-        return JSON.parse(value.toString());
-    }
+    /**
+     * @member {Object}
+     */
+    this.content = {};
 
-    this.header = toJSON(requestArguments[i + 2]);
-    this.parentHeader = toJSON(requestArguments[i + 3]);
-    this.metadata = toJSON(requestArguments[i + 4]);
-    this.content = toJSON(requestArguments[i + 5]);
-    this.blobs = Array.prototype.slice.apply(requestArguments, [i + 6]);
+    /**
+     * @member {Object}
+     */
+    this.metadata = {};
 
-    if (DEBUG) console.log("JMP: MESSAGE: PARSE:", this);
-};
+    /**
+     * @member {Object}
+     */
+    this.blobs = [];
+}
 
 /**
  * Send a response
  *
  * @param {module:zmq~Socket} socket Socket over which the response is sent
- * @param {String} messageType       IPython/Jupyter message type
- * @param {Object} responseContent   IPython/Jupyter response content
- * @param {String} [protocolVersion] IPython/Jupyter protocol version
+ * @param {String} messageType       Jupyter response message type
+ * @param {Object} [content]         Jupyter response content
+ * @param {Object} [metadata]        Jupyter response metadata
+ * @param {String} [protocolVersion] Jupyter protocol version
  */
 Message.prototype.respond = function(
-    socket, messageType, responseContent, protocolVersion
+    socket, messageType, content, metadata, protocolVersion
 ) {
-    var idents = this.idents;
+    var response = new Message();
 
-    var header = {
+    response.idents = this.idents;
+
+    response.header = {
         msg_id: uuid.v4(),
         username: this.header.username,
         session: this.header.session,
         msg_type: messageType,
     };
     if (this.header && this.header.version) {
-        header.version = this.header.version;
+        response.header.version = this.header.version;
     }
     if (protocolVersion) {
-        header.version = protocolVersion;
+        response.header.version = protocolVersion;
     }
-    header = JSON.stringify(header);
 
-    var parentHeader = JSON.stringify(this.header);
+    response.parentHeader = this.header;
+    response.content = content || {};
+    response.metadata = metadata || {};
 
-    var metadata = JSON.stringify({});
+    socket.send(response);
+};
 
-    var content = JSON.stringify(responseContent);
+/**
+ * Decode message received over a ZMQ socket
+ *
+ * @param {argsArray} messageFrames    argsArray of a message listener for a JMP
+ *                                     socket
+ * @param {String}    [scheme=sha256]  Hashing scheme
+ * @param {String}    [key=""]         Hashing key
+ * @returns {module:jmp~Message} `this` to allow chaining
+ * @protected
+ */
+Message.prototype._decode = function(messageFrames, scheme, key) {
+    scheme = scheme || "sha256";
+    key = key || "";
+
+    var i = 0;
+    this.idents = [];
+    for (i = 0; i < messageFrames.length; i++) {
+        var part = messageFrames[i];
+        if (part.toString() === DELIMITER) {
+            break;
+        }
+        this.idents.push(part);
+    }
+    if (messageFrames.length - i < 5) {
+        console.error(
+            "JMP: MESSAGE: DECODE: Not enough message frames", messageFrames
+        );
+        return;
+    }
+    if (messageFrames[i].toString() !== DELIMITER) {
+        console.error(
+            "JMP: MESSAGE: DECODE: Missing delimiter", messageFrames
+        );
+        return;
+    }
+
+    if (key) {
+        var obtainedSignature = messageFrames[i + 1].toString();
+
+        var hmac = crypto.createHmac(scheme, key);
+        hmac.update(messageFrames[i + 2]);
+        hmac.update(messageFrames[i + 3]);
+        hmac.update(messageFrames[i + 4]);
+        hmac.update(messageFrames[i + 5]);
+        var expectedSignature = hmac.digest("hex");
+
+        if (expectedSignature !== obtainedSignature) {
+            console.error(
+                "JMP: MESSAGE: DECODE: Incorrect message signature:",
+                "Obtained = " + obtainedSignature,
+                "Expected = " + expectedSignature
+            );
+            return;
+        }
+    }
+
+    function toJSON(value) {
+        return JSON.parse(value.toString());
+    }
+
+    this.header = toJSON(messageFrames[i + 2]);
+    this.parentHeader = toJSON(messageFrames[i + 3]);
+    this.content = toJSON(messageFrames[i + 5]);
+    this.metadata = toJSON(messageFrames[i + 4]);
+    this.blobs = Array.prototype.slice.apply(messageFrames, [i + 6]);
+};
+
+/**
+ * Encode message for transfer over a ZMQ socket
+ *
+ * @param {String} [scheme=sha256] Hashing scheme
+ * @param {String} [key=""]        Hashing key
+ * @returns {Array} Encoded message
+ * @protected
+ */
+Message.prototype._encode = function(scheme, key) {
+    scheme = scheme || "sha256";
+    key = key || "";
+
+    var idents = this.idents;
+
+    var header = JSON.stringify(this.header);
+    var parentHeader = JSON.stringify(this.parentHeader);
+    var metadata = JSON.stringify(this.metadata);
+    var content = JSON.stringify(this.content);
 
     var signature = '';
-    if (this.key !== '') {
-        var hmac = crypto.createHmac(this.scheme, this.key);
+    if (key) {
+        var hmac = crypto.createHmac(scheme, key);
         hmac.update(header);
         hmac.update(parentHeader);
         hmac.update(metadata);
@@ -207,9 +238,7 @@ Message.prototype.respond = function(
         content, // content
     ]);
 
-    if (DEBUG) console.log("JMP: MESSAGE: RESPOND:", response);
-
-    socket.send(response);
+    return response;
 };
 
 /**
@@ -233,11 +262,33 @@ Socket.prototype = Object.create(zmq.Socket.prototype);
 Socket.prototype.constructor = Socket;
 
 /**
+ * Send the given message.
+ *
+ * @param {module:jmp~Message|String|Buffer|Array} message
+ * @param {Number} flags
+ * @returns {module:jmp~Socket} `this` to allow chaining
+ *
+ */
+Socket.prototype.send = function(message, flags) {
+    var p = Object.getPrototypeOf(Socket.prototype);
+
+    if (message instanceof Message) {
+        if (DEBUG) console.log("JMP: SOCKET: SEND: MESSAGE:", message);
+
+        return p.send.call(
+            this, message._encode(this._jmp.scheme, this._jmp.key), flags
+        );
+    }
+
+    return p.send.apply(this, arguments);
+};
+
+/**
  * Add listener to the end of the listeners array for the specified event
  *
  * @param {String} event
  * @param {Function} listener
- * @returns {module:jmp~Socket} this To allow chaining
+ * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.on = function(event, listener) {
     var p = Object.getPrototypeOf(Socket.prototype);
@@ -249,10 +300,9 @@ Socket.prototype.on = function(event, listener) {
     var _listener = {
         unwrapped: listener,
         wrapped: (function() {
-            if (DEBUG) console.log("JMP: SOCKET: ON: MESSAGE:", this);
-            listener(
-                new Message(arguments, this._jmp.scheme, this._jmp.key)
-            );
+            var message = new Message();
+            message._decode(arguments, this._jmp.scheme, this._jmp.key);
+            listener(message);
         }).bind(this),
     };
     this._jmp._listeners.push(_listener);
@@ -264,7 +314,7 @@ Socket.prototype.on = function(event, listener) {
  *
  * @param {String} event
  * @param {Function} listener
- * @returns {module:jmp~Socket} this To allow chaining
+ * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.addListener = Socket.prototype.on;
 
@@ -274,7 +324,7 @@ Socket.prototype.addListener = Socket.prototype.on;
  *
  * @param {String} event
  * @param {Function} listener
- * @returns {module:jmp~Socket} this To allow chaining
+ * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.once = function(event, listener) {
     var p = Object.getPrototypeOf(Socket.prototype);
@@ -284,8 +334,9 @@ Socket.prototype.once = function(event, listener) {
     }
 
     return p.once.call(this, event, (function() {
-        if (DEBUG) console.log("JMP: SOCKET: ONCE: MESSAGE:", this);
-        listener(new Message(arguments, this._jmp.scheme, this._jmp.key));
+        var message = new Message();
+        message._decode(arguments, this._jmp.scheme, this._jmp.key);
+        listener(message);
     }).bind(this));
 };
 
@@ -294,7 +345,7 @@ Socket.prototype.once = function(event, listener) {
  *
  * @param {String} event
  * @param {Function} listener
- * @returns {module:jmp~Socket} this To allow chaining
+ * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.removeListener = function(event, listener) {
     var p = Object.getPrototypeOf(Socket.prototype);
@@ -319,7 +370,7 @@ Socket.prototype.removeListener = function(event, listener) {
  * Remove all listeners, or those for the specified event
  *
  * @param {String} [event]
- * @returns {module:jmp~Socket} this To allow chaining
+ * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.removeAllListeners = function(event) {
     var p = Object.getPrototypeOf(Socket.prototype);
