@@ -95,8 +95,6 @@ function testNext(context, tests) {
  *
  */
 function createContext(context, tests) {
-    var ident = uuid.v4(null, new Buffer(32));
-
     context.scheme = "sha256";
     context.key = crypto.randomBytes(256).toString('base64');
 
@@ -118,15 +116,17 @@ function createContext(context, tests) {
     for (var attempts = 0;; attempts++) {
         var randomPort = Math.floor(1024 + Math.random() * (65536 - 1024));
         var address = "tcp://127.0.0.1:" + randomPort;
+        
         try {
             context.serverSocket.bindSync(address);
             context.clientSocket.connect(address);
             break;
         } catch (e) {
             console.error(e.stack);
-            if (attempts >= 100) {
-                throw new Error("can't bind to any local ports");
-            }
+        }
+
+        if (attempts >= 100) {
+            throw new Error("can't bind to any local ports");
         }
     }
 
