@@ -37,40 +37,9 @@
 /**
  * @module jmp
  *
- * @description Module `jmp` provides class `Message` for creating, parsing and
- * replying to messages of the Jupyter protocol.
- *
- * @example
- *
- * // Example of replying to a JMP request on the Shell socket:
- * var jmp = require("jmp");
- *
- * // `jmp.Socket` inherits from ZMQ's Socket,
- * // and thus it can be used where a ZMQ Socket is used.
- * // `jmp.Socket` wraps listeners of "message" events,
- * // so that they receive an instance of `jmp.Message`.
- * var shellSocket = new jmp.Socket(
- *     "router",                               \\ ZMQ socket type
- *     "sha256",                               \\ Hashing scheme
- *     "f388c63a-9fb9-4ee9-83f0-1bb790ffc7c7"  \\ Hashing key
- * );
- *
- * shellSocket.on("message", function(request) {
- *     // `request` is an instance of `jmp.Message`
- *
- *     // check the request signature is valid
- *     if (!request.signatureOK) return;
- *
- *     // do something with the request
- *     var msg_type = request.header.msg_type;
- *     var content = request.content;
- *
- *     // set msg_type and content for response
- *     // [...]
- *
- *     // respond
- *     request.respond(shellSocket, msg_type, content);
- * });
+ * @description Module `jmp` provides functionality for creating, parsing and
+ * replying to messages of the Jupyter protocol. It also provides functionality
+ * for networking these messages via {@link module:zmq~Socket ZMQ sockets}.
  *
  */
 module.exports = {
