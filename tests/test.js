@@ -152,18 +152,18 @@ function testCommunication(context, tests) {
     var requestMsgType = "kernel_info_request";
     var responseMsgType = "kernel_info_reply";
 
-    var request = new jmp.Message();
-    request.idents = [];
-    request.header = {
-        "msg_id": uuid.v4(),
-        "username": "user",
-        "session": uuid.v4(),
-        "msg_type": requestMsgType,
-        "version": "5.0",
-    };
-    request.parentHeader = {};
-    request.metadata = {};
-    request.content = {};
+    var request = new jmp.Message({
+        header: {
+            "msg_id": uuid.v4(),
+            "username": "user",
+            "session": uuid.v4(),
+            "msg_type": requestMsgType,
+            "version": "5.0",
+        },
+    });
+    assert.notStrictEqual(
+        request.header, {}, "testCommunication: request.header is unset"
+    );
 
     var responseContent = {
         "protocol_version": "0.0.0",

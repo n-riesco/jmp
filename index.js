@@ -63,38 +63,45 @@ var zmq = module.exports.zmq;
 /**
  * Jupyter message
  * @class
+ * @param          [properties]              Message properties
+ * @param {Array}  [properties.idents]       ZMQ identities
+ * @param {Object} [properties.header]
+ * @param {Object} [properties.parentHeader]
+ * @param {Object} [properties.metadata]
+ * @param {Object} [properties.content]
  */
-function Message() {
+function Message(properties) {
     /**
      * ZMQ identities
      * @member {Array}
      */
-    this.idents = [];
+    this.idents = properties && properties.idents || [];
 
     /**
      * @member {Object}
      */
-    this.header = {};
+    this.header = properties && properties.header || {};
 
     /**
      * @member {Object}
      */
-    this.parentHeader = {};
+    this.parentHeader = properties && properties.parentHeader || {};
 
     /**
      * @member {Object}
      */
-    this.content = {};
+    this.metadata = properties && properties.metadata || {};
 
     /**
      * @member {Object}
      */
-    this.metadata = {};
+    this.content = properties && properties.content || {};
 
     /**
+     * Unparsed JMP message frames (any frames after content)
      * @member {Object}
      */
-    this.blobs = [];
+    this.blobs = properties && properties.blobs || [];
 }
 
 /**
@@ -136,7 +143,7 @@ Message.prototype.respond = function(
 /**
  * Decode message received over a ZMQ socket
  *
- * @param {argsArray} messageFrames    argsArray of a message listener for a JMP
+ * @param {argsArray} messageFrames    argsArray of a message listener on a JMP
  *                                     socket
  * @param {String}    [scheme=sha256]  Hashing scheme
  * @param {String}    [key=""]         Hashing key
