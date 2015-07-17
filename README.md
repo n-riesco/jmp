@@ -8,8 +8,13 @@ Protocol](http://ipython.org/ipython-doc/stable/development/messaging.html) over
 
 ## Anouncements
 
-Version v0.1.0 is backwards-incompatible. `npm` packages depending on the
-initial release of JMP need to update their dependency field:
+- Version v0.2.0 is backwards-incompatible. The attribute `Message#parentHeader`
+  has been renamed to
+  [`Message#parent_header`](http://n-riesco.github.io/jmp/module-jmp-Message.html#parent_header).
+  See [issue #7](https://github.com/n-riesco/jmp/issues/7).
+
+- Version v0.1.0 is backwards-incompatible. `npm` packages depending on the
+  initial release of JMP need to update their dependency field:
 
 ```
 "jmp": "<0.1.0",
@@ -89,7 +94,7 @@ request.header = {
     "msg_type": "kernel_info_request",
     "version": "5.0",
 };
-request.parentHeader = {};
+request.parent_header = {};
 request.metadata = {};
 request.content = {};
 ```

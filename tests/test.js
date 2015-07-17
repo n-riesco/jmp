@@ -221,10 +221,10 @@ function testCommunication(context, tests) {
             makeErrorMessage("request.header", message.header, request.header)
         );
         assert.deepEqual(
-            message.parentHeader, request.parentHeader,
+            message.parent_header, request.parent_header,
             makeErrorMessage(
-                "request.parentHeader",
-                message.parentHeader, request.parentHeader
+                "request.parent_header",
+                message.parent_header, request.parent_header
             )
         );
         assert.deepEqual(
@@ -258,9 +258,9 @@ function testCommunication(context, tests) {
             )
         );
         assert.deepEqual(
-            message.parentHeader, request.header,
+            message.parent_header, request.header,
             makeErrorMessage(
-                "response.parentHeader", message.parentHeader, request.header
+                "response.parent_header", message.parent_header, request.header
             )
         );
         assert.deepEqual(

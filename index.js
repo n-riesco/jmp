@@ -66,7 +66,7 @@ var zmq = module.exports.zmq;
  * @param          [properties]              Message properties
  * @param {Array}  [properties.idents]       ZMQ identities
  * @param {Object} [properties.header]
- * @param {Object} [properties.parentHeader]
+ * @param {Object} [properties.parent_header]
  * @param {Object} [properties.metadata]
  * @param {Object} [properties.content]
  */
@@ -85,7 +85,7 @@ function Message(properties) {
     /**
      * @member {Object}
      */
-    this.parentHeader = properties && properties.parentHeader || {};
+    this.parent_header = properties && properties.parent_header || {};
 
     /**
      * @member {Object}
@@ -133,7 +133,7 @@ Message.prototype.respond = function(
         response.header.version = protocolVersion;
     }
 
-    response.parentHeader = this.header;
+    response.parent_header = this.header;
     response.content = content || {};
     response.metadata = metadata || {};
 
@@ -201,7 +201,7 @@ Message.prototype._decode = function(messageFrames, scheme, key) {
     }
 
     this.header = toJSON(messageFrames[i + 2]);
-    this.parentHeader = toJSON(messageFrames[i + 3]);
+    this.parent_header = toJSON(messageFrames[i + 3]);
     this.content = toJSON(messageFrames[i + 5]);
     this.metadata = toJSON(messageFrames[i + 4]);
     this.blobs = Array.prototype.slice.apply(messageFrames, [i + 6]);
@@ -222,7 +222,7 @@ Message.prototype._encode = function(scheme, key) {
     var idents = this.idents;
 
     var header = JSON.stringify(this.header);
-    var parentHeader = JSON.stringify(this.parentHeader);
+    var parent_header = JSON.stringify(this.parent_header);
     var metadata = JSON.stringify(this.metadata);
     var content = JSON.stringify(this.content);
 
@@ -230,7 +230,7 @@ Message.prototype._encode = function(scheme, key) {
     if (key) {
         var hmac = crypto.createHmac(scheme, key);
         hmac.update(header);
-        hmac.update(parentHeader);
+        hmac.update(parent_header);
         hmac.update(metadata);
         hmac.update(content);
         signature = hmac.digest("hex");
@@ -240,7 +240,7 @@ Message.prototype._encode = function(scheme, key) {
         DELIMITER, // delimiter
         signature, // HMAC signature
         header, // header
-        parentHeader, // parent header
+        parent_header, // parent header
         metadata, // metadata
         content, // content
     ]);
