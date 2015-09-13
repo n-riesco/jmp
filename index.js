@@ -191,10 +191,11 @@ Message.prototype.respond = function(
     var signature = '';
     if (this.key !== '') {
         var hmac = crypto.createHmac(this.scheme, this.key);
-        hmac.update(header);
-        hmac.update(parentHeader);
-        hmac.update(metadata);
-        hmac.update(content);
+        var encoding = "utf8";
+        hmac.update(new Buffer(header, encoding));
+        hmac.update(new Buffer(parentHeader, encoding));
+        hmac.update(new Buffer(metadata, encoding));
+        hmac.update(new Buffer(content, encoding));
         signature = hmac.digest("hex");
     }
 

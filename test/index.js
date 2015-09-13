@@ -170,7 +170,7 @@ function testCommunication(context, tests) {
 
     var responseContent = {
         "protocol_version": "0.0.0",
-        "implementation": "kernel",
+        "implementation": "π",
         "implementation_version": "0.0.0",
         "language_info": {
             "name": "test",
