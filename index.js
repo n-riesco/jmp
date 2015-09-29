@@ -102,6 +102,13 @@ function Message(properties) {
      * @member {Object}
      */
     this.blobs = properties && properties.blobs || [];
+
+    /**
+     * Validity of message signature
+     * (only set for messages received on JMP sockets)
+     * @member {?Boolean}
+     */
+    this.signatureOK = null;
 }
 
 /**
@@ -186,18 +193,16 @@ Message.prototype._decode = function(messageFrames, scheme, key) {
         hmac.update(messageFrames[i + 5]);
         var expectedSignature = hmac.digest("hex");
 
-        if (expectedSignature !== obtainedSignature) {
+        this.signatureOK = (expectedSignature === obtainedSignature);
+        if (!this.signatureOK) {
             console.error(
                 "JMP: MESSAGE: DECODE: Incorrect message signature:",
                 "Obtained = " + obtainedSignature,
                 "Expected = " + expectedSignature
             );
+
             return;
         }
-    }
-
-    function toJSON(value) {
-        return JSON.parse(value.toString());
     }
 
     this.header = toJSON(messageFrames[i + 2]);
@@ -205,6 +210,10 @@ Message.prototype._decode = function(messageFrames, scheme, key) {
     this.content = toJSON(messageFrames[i + 5]);
     this.metadata = toJSON(messageFrames[i + 4]);
     this.blobs = Array.prototype.slice.apply(messageFrames, [i + 6]);
+
+    function toJSON(value) {
+        return JSON.parse(value.toString());
+    }
 };
 
 /**
