@@ -1,6 +1,6 @@
 {
     "name": "jmp",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "description": "Node.js module for creating, parsing and replying to messages of the Jupyter Messaging Protocol (JMP)",
     "keywords": [
         "jupyter",
