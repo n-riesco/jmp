@@ -41,7 +41,7 @@ var console = require("console");
 var crypto = require("crypto");
 var uuid = require("node-uuid");
 
-var jmp = require("jmp");
+var jmp = require("../index.js");
 jmp.Message.prototype.sendTo = jmpMessageSendTo;
 var zmq = jmp.zmq;
 
@@ -58,6 +58,7 @@ var zmq = jmp.zmq;
 
 testNext({}, [
     createContext,
+    testListeners,
     testCommunication,
     destroyContext,
 ]);
@@ -95,6 +96,8 @@ function testNext(context, tests) {
  *
  */
 function createContext(context, tests) {
+    console.log("Tests initiated...");
+
     context.scheme = "sha256";
     context.key = crypto.randomBytes(256).toString('base64');
 
@@ -113,22 +116,7 @@ function createContext(context, tests) {
     );
 
     // Bind to a random local port
-    for (var attempts = 0;; attempts++) {
-        var randomPort = Math.floor(1024 + Math.random() * (65536 - 1024));
-        var address = "tcp://127.0.0.1:" + randomPort;
-        
-        try {
-            context.serverSocket.bindSync(address);
-            context.clientSocket.connect(address);
-            break;
-        } catch (e) {
-            console.error(e.stack);
-        }
-
-        if (attempts >= 100) {
-            throw new Error("can't bind to any local ports");
-        }
-    }
+    bindServerAndClient(context.serverSocket, context.clientSocket);
 
     testNext(context, tests);
 }
@@ -139,6 +127,8 @@ function createContext(context, tests) {
  *
  */
 function destroyContext(context, tests) {
+    console.log("Tests completed.");
+
     context.serverSocket.close();
     context.clientSocket.close();
 
@@ -147,9 +137,94 @@ function destroyContext(context, tests) {
 
 /**
  * @type Test
+ * @description Test methods for handling listeners
+ *
+ */
+function testListeners(context, tests) {
+    console.log("Testing listeners...");
+
+    var serverSocket = new jmp.Socket("rep");
+    var clientSocket = new jmp.Socket("req");
+
+    serverSocket.on("message", onServerMessageListener1);
+    serverSocket.on("message", onServerMessageListener2);
+    clientSocket.on("message", onClientMessage);
+    clientSocket.on("close", function() {});
+
+    bindServerAndClient(serverSocket, clientSocket);
+
+    var request = new jmp.Message();
+    request.scheme = "";
+    request.key = "";
+    request.idents = [];
+    request.header = {
+        "msg_id": uuid.v4(),
+        "username": "username",
+        "session": uuid.v4(),
+        "msg_type": "msg_type",
+        "version": "5.0",
+    };
+    request.parentHeader = {};
+    request.metadata = {};
+    request.content = {};
+    request.sendTo(clientSocket);
+
+    function onServerMessageListener1(message) {
+        if (DEBUG) console.log("Running onServerMessageListener1...");
+
+        onServerMessageListener1.hasRun = true;
+        if (onServerMessageListener2.hasRun) {
+            message.respond(serverSocket, "msg_type", {});
+        }
+    }
+
+    function onServerMessageListener2(message) {
+        if (DEBUG) console.log("Running onServerMessageListener2...");
+
+        onServerMessageListener2.hasRun = true;
+        if (onServerMessageListener1.hasRun) {
+            message.respond(serverSocket, "msg_type", {});
+        }
+    }
+
+    function onClientMessage() {
+        if (DEBUG) console.log("Running onClientMessage...");
+
+        clientSocket.close();
+        serverSocket.close();
+
+        serverSocket.removeListener("message", onServerMessageListener1);
+        serverSocket.removeListener("message", onServerMessageListener2);
+        clientSocket.removeAllListeners();
+
+        assert.deepEqual(
+            serverSocket._events, {},
+            "Failed to removed all listeners in serverSocket"
+        );
+        assert.deepEqual(
+            serverSocket._jmp._listeners, [],
+            "Failed to removed all message listeners in serverSocket"
+        );
+        assert.deepEqual(
+            clientSocket._events, {},
+            "Failed to removed all listeners in clientSocket"
+        );
+        assert.deepEqual(
+            clientSocket._jmp._listeners, [],
+            "Failed to removed all message listeners in clientSocket"
+        );
+
+        testNext(context, tests);
+    }
+}
+
+/**
+ * @type Test
  * @description Tests communication between a client and a server JMP sockets
  */
 function testCommunication(context, tests) {
+    console.log("Testing communication...");
+
     var requestMsgType = "kernel_info_request";
     var responseMsgType = "kernel_info_reply";
 
@@ -320,4 +395,29 @@ function jmpMessageSendTo(socket) {
     if (DEBUG) console.log("JMP: MESSAGE: SEND:", message);
 
     socket.send(message);
+}
+
+/**
+ * Bind server and client through a random port
+ *
+ * @param {module:zmq~Socket} serverSocket Server socket
+ * @param {module:zmq~Socket} clientSocket Client socket
+ */
+function bindServerAndClient(serverSocket, clientSocket) {
+    for (var attempts = 0;; attempts++) {
+        var randomPort = Math.floor(1024 + Math.random() * (65536 - 1024));
+        var address = "tcp://127.0.0.1:" + randomPort;
+
+        try {
+            serverSocket.bindSync(address);
+            clientSocket.connect(address);
+            break;
+        } catch (e) {
+            console.error(e.stack);
+        }
+
+        if (attempts >= 100) {
+            throw new Error("can't bind to any local ports");
+        }
+    }
 }
