@@ -329,5 +329,5 @@ Socket.prototype.removeAllListeners = function(event) {
         this._jmp._listeners.length = 0;
     }
 
-    return p.removeListener.apply(this, arguments);
+    return p.removeAllListeners.apply(this, arguments);
 };
