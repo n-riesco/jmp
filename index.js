@@ -69,6 +69,7 @@ var zmq = module.exports.zmq;
  * @param {Object} [properties.parent_header]
  * @param {Object} [properties.metadata]
  * @param {Object} [properties.content]
+ * @param {Array}  [properties.blobs]        Unparsed message frames
  */
 function Message(properties) {
     /**
@@ -99,7 +100,7 @@ function Message(properties) {
 
     /**
      * Unparsed JMP message frames (any frames after content)
-     * @member {Object}
+     * @member {Array}
      */
     this.blobs = properties && properties.blobs || [];
 
