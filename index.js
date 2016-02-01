@@ -103,13 +103,6 @@ function Message(properties) {
      * @member {Array}
      */
     this.blobs = properties && properties.blobs || [];
-
-    /**
-     * Validity of message signature
-     * (only set for messages received on JMP sockets)
-     * @member {?Boolean}
-     */
-    this.signatureOK = null;
 }
 
 /**
@@ -155,7 +148,7 @@ Message.prototype.respond = function(
  *                                     socket
  * @param {String}    [scheme=sha256]  Hashing scheme
  * @param {String}    [key=""]         Hashing key
- * @returns {module:jmp~Message} `this` to allow chaining
+ * @returns {Boolean} `false` if message signature is invalid, `true` otherwise
  * @protected
  */
 Message.prototype._decode = function(messageFrames, scheme, key) {
@@ -165,11 +158,11 @@ Message.prototype._decode = function(messageFrames, scheme, key) {
     var i = 0;
     this.idents = [];
     for (i = 0; i < messageFrames.length; i++) {
-        var part = messageFrames[i];
-        if (part.toString() === DELIMITER) {
+        var frame = messageFrames[i];
+        if (frame.toString() === DELIMITER) {
             break;
         }
-        this.idents.push(part);
+        this.idents.push(frame);
     }
     if (messageFrames.length - i < 5) {
         console.error(
@@ -194,15 +187,13 @@ Message.prototype._decode = function(messageFrames, scheme, key) {
         hmac.update(messageFrames[i + 5]);
         var expectedSignature = hmac.digest("hex");
 
-        this.signatureOK = (expectedSignature === obtainedSignature);
-        if (!this.signatureOK) {
+        if (expectedSignature !== obtainedSignature) {
             console.error(
                 "JMP: MESSAGE: DECODE: Incorrect message signature:",
                 "Obtained = " + obtainedSignature,
                 "Expected = " + expectedSignature
             );
-
-            return;
+            return false;
         }
     }
 
@@ -211,6 +202,8 @@ Message.prototype._decode = function(messageFrames, scheme, key) {
     this.content = toJSON(messageFrames[i + 5]);
     this.metadata = toJSON(messageFrames[i + 4]);
     this.blobs = Array.prototype.slice.apply(messageFrames, [i + 6]);
+
+    return true;
 
     function toJSON(value) {
         return JSON.parse(value.toString());
@@ -260,6 +253,19 @@ Message.prototype._encode = function(scheme, key) {
 };
 
 /**
+ * @callback    module:jmp~Socket~Listener
+ * @description Callback invoked on events other than "message" events
+ * @see         {module:zmq}
+ */
+
+/**
+ * @callback    module:jmp~Socket~MessageListerner
+ * @description Callback invoked on "message" events
+ * @param       {module:jmp~Message} message        Decoded JMP message
+ * @param       {Boolean}            isSignatureOK  `false` if invalid signature
+ */
+
+/**
  * @class
  * @classdesc ZMQ socket that parses the Jupyter Messaging Protocol
  *
@@ -304,8 +310,11 @@ Socket.prototype.send = function(message, flags) {
 /**
  * Add listener to the end of the listeners array for the specified event
  *
- * @param {String} event
- * @param {Function} listener
+ * @param {String}                         event
+ * @param {
+ *     module:jmp~Socket~Listener |
+ *     module:jmp~Socket~MessageListerner
+ * }                                       listener
  * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.on = function(event, listener) {
@@ -319,8 +328,10 @@ Socket.prototype.on = function(event, listener) {
         unwrapped: listener,
         wrapped: (function() {
             var message = new Message();
-            message._decode(arguments, this._jmp.scheme, this._jmp.key);
-            listener(message);
+            var isSignatureOK = message._decode(
+                arguments, this._jmp.scheme, this._jmp.key
+            );
+            listener(message, isSignatureOK);
         }).bind(this),
     };
     this._jmp._listeners.push(_listener);
@@ -330,8 +341,12 @@ Socket.prototype.on = function(event, listener) {
 /**
  * Add listener to the end of the listeners array for the specified event
  *
- * @param {String} event
- * @param {Function} listener
+ * @method module:jmp~Socket#addListener
+ * @param {String}                         event
+ * @param {
+ *     module:jmp~Socket~Listener |
+ *     module:jmp~Socket~MessageListerner
+ * }                                       listener
  * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.addListener = Socket.prototype.on;
@@ -340,8 +355,11 @@ Socket.prototype.addListener = Socket.prototype.on;
  * Add a one-time listener to the end of the listeners array for the specified
  * event
  *
- * @param {String} event
- * @param {Function} listener
+ * @param {String}                         event
+ * @param {
+ *     module:jmp~Socket~Listener |
+ *     module:jmp~Socket~MessageListerner
+ * }                                       listener
  * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.once = function(event, listener) {
@@ -353,16 +371,21 @@ Socket.prototype.once = function(event, listener) {
 
     return p.once.call(this, event, (function() {
         var message = new Message();
-        message._decode(arguments, this._jmp.scheme, this._jmp.key);
-        listener(message);
+        var isSignatureOK = message._decode(
+            arguments, this._jmp.scheme, this._jmp.key
+        );
+        listener(message, isSignatureOK);
     }).bind(this));
 };
 
 /**
  * Remove listener from the listeners array for the specified event
  *
- * @param {String} event
- * @param {Function} listener
+ * @param {String}                         event
+ * @param {
+ *     module:jmp~Socket~Listener |
+ *     module:jmp~Socket~MessageListerner
+ * }                                       listener
  * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.removeListener = function(event, listener) {

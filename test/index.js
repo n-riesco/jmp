@@ -247,27 +247,16 @@ function testCommunication(context, tests) {
     context.serverSocket.on("message", getRequest);
     context.clientSocket.on("message", getResponse);
 
-    startTest();
+    context.clientSocket.send(request);
 
-    function startTest() {
-        context.clientSocket.send(request);
-    }
+    return;
 
-    function respondToRequest(message) {
-        message.respond(
-            context.serverSocket,
-            responseMsgType, responseContent, responseMetadata
+    function getRequest(message, isSignatureOK) {
+        assert(
+            isSignatureOK,
+            "testCommunication: Invalid signature in request message"
         );
-    }
 
-    function endTest() {
-        context.serverSocket.removeListener("message", getRequest);
-        context.clientSocket.removeListener("message", getResponse);
-
-        testNext(context, tests);
-    }
-
-    function getRequest(message) {
         assert.equal(
             message.idents[0],
             context.clientSocket.getsockopt(zmq.ZMQ_IDENTITY),
@@ -301,10 +290,18 @@ function testCommunication(context, tests) {
             )
         );
 
-        respondToRequest(message);
+        message.respond(
+            context.serverSocket,
+            responseMsgType, responseContent, responseMetadata
+        );
     }
 
-    function getResponse(message) {
+    function getResponse(message, isSignatureOK) {
+        assert(
+            isSignatureOK,
+            "testCommunication: Invalid signature in response message"
+        );
+
         assert.equal(
             message.idents.length,
             0,
@@ -331,7 +328,10 @@ function testCommunication(context, tests) {
             )
         );
 
-        endTest();
+        context.serverSocket.removeListener("message", getRequest);
+        context.clientSocket.removeListener("message", getResponse);
+
+        testNext(context, tests);
     }
 
     function makeErrorMessage(message, obtained, expected) {
