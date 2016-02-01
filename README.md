@@ -8,7 +8,7 @@ Protocol](http://ipython.org/ipython-doc/stable/development/messaging.html) over
 
 ## Anouncements
 
-- Version v0.3.0 is backwards-incompatible.  See [issue
+- Version v0.3.0 is **an alpha release**.  See [issue
   #10](https://github.com/n-riesco/jmp/issues/10).  The property
   `Socket#signatureOK` has been removed and "message" listeners now receive
   `isSignatureOK` as a second argument:
