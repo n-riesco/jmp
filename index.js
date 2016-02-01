@@ -148,7 +148,7 @@ Message.prototype.respond = function(
  *                                     socket
  * @param {String}    [scheme=sha256]  Hashing scheme
  * @param {String}    [key=""]         Hashing key
- * @returns {Boolean} `false` if message signature is invalid, `true` otherwise
+ * @returns {Boolean} `false` if malformed message, `true` otherwise
  * @protected
  */
 Message.prototype._decode = function(messageFrames, scheme, key) {
@@ -156,25 +156,27 @@ Message.prototype._decode = function(messageFrames, scheme, key) {
     key = key || "";
 
     var i = 0;
-    this.idents = [];
+    var idents = [];
     for (i = 0; i < messageFrames.length; i++) {
         var frame = messageFrames[i];
         if (frame.toString() === DELIMITER) {
             break;
         }
-        this.idents.push(frame);
+        idents.push(frame);
     }
+
     if (messageFrames.length - i < 5) {
         console.error(
             "JMP: MESSAGE: DECODE: Not enough message frames", messageFrames
         );
-        return;
+        return false;
     }
+
     if (messageFrames[i].toString() !== DELIMITER) {
         console.error(
             "JMP: MESSAGE: DECODE: Missing delimiter", messageFrames
         );
-        return;
+        return false;
     }
 
     if (key) {
@@ -197,6 +199,7 @@ Message.prototype._decode = function(messageFrames, scheme, key) {
         }
     }
 
+    this.idents = idents;
     this.header = toJSON(messageFrames[i + 2]);
     this.parent_header = toJSON(messageFrames[i + 3]);
     this.content = toJSON(messageFrames[i + 5]);
