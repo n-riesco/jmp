@@ -148,10 +148,10 @@ Message.prototype.respond = function(
  *                                     socket
  * @param {String}    [scheme=sha256]  Hashing scheme
  * @param {String}    [key=""]         Hashing key
- * @returns {Boolean} `false` if malformed message, `true` otherwise
+ * @returns {?module:jmp~Message} JMP message or `null` if failed to decode
  * @protected
  */
-Message.prototype._decode = function(messageFrames, scheme, key) {
+Message._decode = function(messageFrames, scheme, key) {
     scheme = scheme || "sha256";
     key = key || "";
 
@@ -169,14 +169,14 @@ Message.prototype._decode = function(messageFrames, scheme, key) {
         console.error(
             "JMP: MESSAGE: DECODE: Not enough message frames", messageFrames
         );
-        return false;
+        return null;
     }
 
     if (messageFrames[i].toString() !== DELIMITER) {
         console.error(
             "JMP: MESSAGE: DECODE: Missing delimiter", messageFrames
         );
-        return false;
+        return null;
     }
 
     if (key) {
@@ -195,18 +195,20 @@ Message.prototype._decode = function(messageFrames, scheme, key) {
                 "Obtained = " + obtainedSignature,
                 "Expected = " + expectedSignature
             );
-            return false;
+            return null;
         }
     }
 
-    this.idents = idents;
-    this.header = toJSON(messageFrames[i + 2]);
-    this.parent_header = toJSON(messageFrames[i + 3]);
-    this.content = toJSON(messageFrames[i + 5]);
-    this.metadata = toJSON(messageFrames[i + 4]);
-    this.blobs = Array.prototype.slice.apply(messageFrames, [i + 6]);
+    var message = new Message({
+        idents: idents,
+        header: toJSON(messageFrames[i + 2]),
+        parent_header: toJSON(messageFrames[i + 3]),
+        content: toJSON(messageFrames[i + 5]),
+        metadata: toJSON(messageFrames[i + 4]),
+        blobs: Array.prototype.slice.apply(messageFrames, [i + 6]),
+    });
 
-    return true;
+    return message;
 
     function toJSON(value) {
         return JSON.parse(value.toString());
@@ -250,23 +252,10 @@ Message.prototype._encode = function(scheme, key) {
         parent_header, // parent header
         metadata, // metadata
         content, // content
-    ]);
+    ]).concat(this.blobs);
 
     return response;
 };
-
-/**
- * @callback    module:jmp~Socket~Listener
- * @description Callback invoked on events other than "message" events
- * @see         {module:zmq}
- */
-
-/**
- * @callback    module:jmp~Socket~MessageListerner
- * @description Callback invoked on "message" events
- * @param       {module:jmp~Message} message        Decoded JMP message
- * @param       {Boolean}            isSignatureOK  `false` if invalid signature
- */
 
 /**
  * @class
@@ -313,11 +302,8 @@ Socket.prototype.send = function(message, flags) {
 /**
  * Add listener to the end of the listeners array for the specified event
  *
- * @param {String}                         event
- * @param {
- *     module:jmp~Socket~Listener |
- *     module:jmp~Socket~MessageListerner
- * }                                       listener
+ * @param {String}   event
+ * @param {Function} listener
  * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.on = function(event, listener) {
@@ -330,11 +316,12 @@ Socket.prototype.on = function(event, listener) {
     var _listener = {
         unwrapped: listener,
         wrapped: (function() {
-            var message = new Message();
-            var isSignatureOK = message._decode(
+            var message = Message._decode(
                 arguments, this._jmp.scheme, this._jmp.key
             );
-            listener(message, isSignatureOK);
+            if (message) {
+                listener(message);
+            }
         }).bind(this),
     };
     this._jmp._listeners.push(_listener);
@@ -345,11 +332,8 @@ Socket.prototype.on = function(event, listener) {
  * Add listener to the end of the listeners array for the specified event
  *
  * @method module:jmp~Socket#addListener
- * @param {String}                         event
- * @param {
- *     module:jmp~Socket~Listener |
- *     module:jmp~Socket~MessageListerner
- * }                                       listener
+ * @param {String}   event
+ * @param {Function} listener
  * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.addListener = Socket.prototype.on;
@@ -358,11 +342,8 @@ Socket.prototype.addListener = Socket.prototype.on;
  * Add a one-time listener to the end of the listeners array for the specified
  * event
  *
- * @param {String}                         event
- * @param {
- *     module:jmp~Socket~Listener |
- *     module:jmp~Socket~MessageListerner
- * }                                       listener
+ * @param {String}   event
+ * @param {Function} listener
  * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.once = function(event, listener) {
@@ -373,22 +354,20 @@ Socket.prototype.once = function(event, listener) {
     }
 
     return p.once.call(this, event, (function() {
-        var message = new Message();
-        var isSignatureOK = message._decode(
+        var message = Message._decode(
             arguments, this._jmp.scheme, this._jmp.key
         );
-        listener(message, isSignatureOK);
+        if (message) {
+            listener(message);
+        }
     }).bind(this));
 };
 
 /**
  * Remove listener from the listeners array for the specified event
  *
- * @param {String}                         event
- * @param {
- *     module:jmp~Socket~Listener |
- *     module:jmp~Socket~MessageListerner
- * }                                       listener
+ * @param {String}   event
+ * @param {Function} listener
  * @returns {module:jmp~Socket} `this` to allow chaining
  */
 Socket.prototype.removeListener = function(event, listener) {

@@ -8,19 +8,9 @@ Protocol](http://ipython.org/ipython-doc/stable/development/messaging.html) over
 
 ## Anouncements
 
-- Version v0.3.0 is **an alpha release**.  See [issue
-  #10](https://github.com/n-riesco/jmp/issues/10).  The property
-  `Socket#signatureOK` has been removed and "message" listeners now receive
-  `isSignatureOK` as a second argument:
-
-```javascript
-/**
- * @callback    Socket~MessageListerner
- * @description Callback invoked on "message" events
- * @param       {module:jmp~Message} message        Decoded JMP message
- * @param       {Boolean}            isSignatureOK  `false` if invalid signature
- */
-```
+- Version v0.4.0 is is backwards-incompatible. The attribute
+  `Message#signatureOK` has been removed.
+  See [issue #10](https://github.com/n-riesco/jmp/issues/10).
 
 - Version v0.2.0 is backwards-incompatible. The attribute `Message#parentHeader`
   has been renamed to
@@ -124,9 +114,7 @@ clientSocket.send(request);
 ```js
 serverSocket.on("message", onRequest);
 
-function onRequest(msg, isSignatureOK) {
-    assert(isSignatureOK, "JMP: Invalid signature");
-
+function onRequest(msg) {
     var responseMessageType = "kernel_info_reply";
 
     var responseContent = {

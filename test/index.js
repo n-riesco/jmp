@@ -58,6 +58,7 @@ var zmq = jmp.zmq;
 testNext({}, [
     createContext,
     testListeners,
+    testSignature,
     testCommunication,
     destroyContext,
 ]);
@@ -205,6 +206,45 @@ function testListeners(context, tests) {
 
 /**
  * @type Test
+ * @description Test message signature
+ *
+ */
+function testSignature(context, tests) {
+    console.log("Testing message signature...");
+
+    var scheme = "sha256";
+    var key = crypto.randomBytes(256).toString('base64');
+    var anotherKey = crypto.randomBytes(256).toString('base64');
+    assert.notEqual(key, anotherKey, "Failed to generate a pair of keys");
+
+    var originalMessage = new jmp.Message();
+    var messageFrames = originalMessage._encode(scheme, key);
+
+    var decodedMessage = jmp.Message._decode(messageFrames, scheme, key);
+    assert.deepEqual(
+        decodedMessage, originalMessage,
+        makeErrorMessage("message", decodedMessage, originalMessage)
+    );
+
+    var malformedMessage = jmp.Message._decode(
+        messageFrames, scheme, anotherKey
+    );
+    assert(!malformedMessage, "Failed to detect a malformed message");
+
+    testNext(context, tests);
+
+    function makeErrorMessage(message, obtained, expected) {
+        return [
+            "testSignature",
+            message,
+            "Obtained", obtained,
+            "Expected", expected,
+        ].join(": ");
+    }
+}
+
+/**
+ * @type Test
  * @description Tests communication between a client and a server JMP sockets
  */
 function testCommunication(context, tests) {
@@ -251,12 +291,7 @@ function testCommunication(context, tests) {
 
     return;
 
-    function getRequest(message, isSignatureOK) {
-        assert(
-            isSignatureOK,
-            "testCommunication: Invalid signature in request message"
-        );
-
+    function getRequest(message) {
         assert.equal(
             message.idents[0],
             context.clientSocket.getsockopt(zmq.ZMQ_IDENTITY),
@@ -296,12 +331,7 @@ function testCommunication(context, tests) {
         );
     }
 
-    function getResponse(message, isSignatureOK) {
-        assert(
-            isSignatureOK,
-            "testCommunication: Invalid signature in response message"
-        );
-
+    function getResponse(message) {
         assert.equal(
             message.idents.length,
             0,
