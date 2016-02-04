@@ -34,6 +34,27 @@
  *
  */
 
+var crypto = require("crypto");
+var uuid = require("node-uuid");
+var zmq = require("zmq");
+
+var DEBUG = global.DEBUG || false;
+
+var log;
+if (DEBUG) {
+    var console = require("console");
+    log = function log() {
+        process.stderr.write("JMP: ");
+        console.error.apply(this, arguments);
+    };
+} else {
+    try {
+        log = require("debug")("JMP:");
+    } catch (err) {
+        log = function noop() {};
+    }
+}
+
 /**
  * @module jmp
  *
@@ -49,16 +70,10 @@ module.exports = {
     /**
      * ZeroMQ bindings
      */
-    zmq: require("zmq"),
+    zmq: zmq,
 };
 
-var DEBUG = global.DEBUG || false;
 var DELIMITER = '<IDS|MSG>';
-
-var console = require("console");
-var crypto = require("crypto");
-var uuid = require("node-uuid");
-var zmq = module.exports.zmq;
 
 /**
  * Jupyter message
@@ -166,16 +181,12 @@ Message._decode = function(messageFrames, scheme, key) {
     }
 
     if (messageFrames.length - i < 5) {
-        console.error(
-            "JMP: MESSAGE: DECODE: Not enough message frames", messageFrames
-        );
+        log("MESSAGE: DECODE: Not enough message frames", messageFrames);
         return null;
     }
 
     if (messageFrames[i].toString() !== DELIMITER) {
-        console.error(
-            "JMP: MESSAGE: DECODE: Missing delimiter", messageFrames
-        );
+        log("MESSAGE: DECODE: Missing delimiter", messageFrames);
         return null;
     }
 
@@ -190,8 +201,8 @@ Message._decode = function(messageFrames, scheme, key) {
         var expectedSignature = hmac.digest("hex");
 
         if (expectedSignature !== obtainedSignature) {
-            console.error(
-                "JMP: MESSAGE: DECODE: Incorrect message signature:",
+            log(
+                "MESSAGE: DECODE: Incorrect message signature:",
                 "Obtained = " + obtainedSignature,
                 "Expected = " + expectedSignature
             );
@@ -289,7 +300,7 @@ Socket.prototype.send = function(message, flags) {
     var p = Object.getPrototypeOf(Socket.prototype);
 
     if (message instanceof Message) {
-        if (DEBUG) console.log("JMP: SOCKET: SEND: MESSAGE:", message);
+        log("SOCKET: SEND:", message);
 
         return p.send.call(
             this, message._encode(this._jmp.scheme, this._jmp.key), flags
