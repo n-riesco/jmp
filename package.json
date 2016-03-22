@@ -1,5 +1,5 @@
 {
-    "name": "jmp",
+    "name": "jmp-prebuilt",
     "version": "0.4.0",
     "description": "Node.js module for creating, parsing and replying to messages of the Jupyter Messaging Protocol (JMP)",
     "keywords": [
@@ -19,11 +19,11 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/n-riesco/jmp.git"
+        "url": "https://github.com/n-riesco/jmp/tree/jmp-prebuilt"
     },
     "dependencies": {
         "node-uuid": "^1.4.2",
-        "zmq": "^2.10.0"
+        "zmq-prebuilt": "^0.0.3"
     },
     "devDependencies": {
         "jsdoc": "latest",
