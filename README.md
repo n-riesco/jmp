@@ -6,6 +6,23 @@ Protocol](http://ipython.org/ipython-doc/stable/development/messaging.html) over
 [ZMQ sockets](http://zeromq.org/bindings:node-js).
 
 
+## `jmp` vs `jmp-prebuilt`
+
+JMP is currently distributed in two flavours:
+
+- `npm install jmp` that requires that `node-gyp`, a compiler and the ZMQ
+   library are installed in the user's computer (e.g. in Ubuntu, the user needs
+   to run `sudo apt-get install libzmq3-dev` before installing JMP).
+
+- `npm install jmp-prebuilt` that depends on `zmq-prebuilt`. `zmq-prebuilt`
+   provides precompiled binaries of the ZMQ library (Note that `zmq-prebuilt` is
+   still work in progress).
+
+The development of `jmp-prebuilt` is taking place in the branch `jmp-prebuilt`
+of this repository. If you wish to make any contributions to `jmp-prebuilt`,
+please, ensure your PR targets this branch.
+
+
 ## Anouncements
 
 - Version v0.4.0 is is backwards-incompatible. The attribute
