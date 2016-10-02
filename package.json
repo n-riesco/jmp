@@ -23,7 +23,7 @@
     },
     "dependencies": {
         "node-uuid": "^1.4.2",
-        "zmq-prebuilt": "^0.0.3"
+        "zmq-prebuilt": "1.x"
     },
     "devDependencies": {
         "jsdoc": "latest",
