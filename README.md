@@ -25,11 +25,11 @@ please, ensure your PR targets this branch.
 
 ## Anouncements
 
-- Version v0.5.0 is is backwards-incompatible. The attribute
+- Version v0.5.0 is backwards-incompatible. The attribute
   `Message#blobs` has been renamed to `Message#buffers`.
   See [issue #14](https://github.com/n-riesco/jmp/issues/14).
 
-- Version v0.4.0 is is backwards-incompatible. The attribute
+- Version v0.4.0 is backwards-incompatible. The attribute
   `Message#signatureOK` has been removed.
   See [issue #10](https://github.com/n-riesco/jmp/issues/10).
 
