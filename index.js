@@ -84,7 +84,7 @@ var DELIMITER = '<IDS|MSG>';
  * @param {Object} [properties.parent_header]
  * @param {Object} [properties.metadata]
  * @param {Object} [properties.content]
- * @param {Array}  [properties.blobs]        Unparsed message frames
+ * @param {Array}  [properties.buffers]        Unparsed message frames
  */
 function Message(properties) {
     /**
@@ -117,7 +117,7 @@ function Message(properties) {
      * Unparsed JMP message frames (any frames after content)
      * @member {Array}
      */
-    this.blobs = properties && properties.blobs || [];
+    this.buffers = properties && properties.buffers || [];
 }
 
 /**
@@ -216,7 +216,7 @@ Message._decode = function(messageFrames, scheme, key) {
         parent_header: toJSON(messageFrames[i + 3]),
         content: toJSON(messageFrames[i + 5]),
         metadata: toJSON(messageFrames[i + 4]),
-        blobs: Array.prototype.slice.apply(messageFrames, [i + 6]),
+        buffers: Array.prototype.slice.apply(messageFrames, [i + 6]),
     });
 
     return message;
@@ -263,7 +263,7 @@ Message.prototype._encode = function(scheme, key) {
         parent_header, // parent header
         metadata, // metadata
         content, // content
-    ]).concat(this.blobs);
+    ]).concat(this.buffers);
 
     return response;
 };
