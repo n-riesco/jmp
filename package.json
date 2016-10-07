@@ -1,6 +1,6 @@
 {
     "name": "jmp-prebuilt",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "description": "Node.js module for creating, parsing and replying to messages of the Jupyter Messaging Protocol (JMP)",
     "keywords": [
         "jupyter",
