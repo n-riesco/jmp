@@ -36,6 +36,7 @@
 
 var assert = require("assert");
 var crypto = require("crypto");
+var util = require("util");
 
 var uuid = require("node-uuid");
 
@@ -222,17 +223,29 @@ describe("JMP messages", function() {
         var requestMsgType = "kernel_info_request";
         var responseMsgType = "kernel_info_reply";
 
+        var requestHeader = {
+            "msg_id": uuid.v4(),
+            "username": "user",
+            "session": uuid.v4(),
+            "msg_type": requestMsgType,
+            "version": "5.0",
+        };
+        var requestBuffers = [0x2A, "42", Array(42), { 42: 42 }];
         var request = new jmp.Message({
-            header: {
-                "msg_id": uuid.v4(),
-                "username": "user",
-                "session": uuid.v4(),
-                "msg_type": requestMsgType,
-                "version": "5.0",
-            },
+            header: requestHeader,
+            buffers: requestBuffers,
         });
-        assert.notStrictEqual(
-            request.header, {}, "request.header is unset"
+        assert.deepEqual(
+            request.header, requestHeader,
+            makeErrorMessage(
+                "request.header is unset", request.header, requestHeader
+            )
+        );
+        assert.deepEqual(
+            request.buffers, requestBuffers,
+            makeErrorMessage(
+                "request.buffers is unset", request.buffers, requestBuffers
+            )
         );
 
         var responseContent = {
@@ -261,6 +274,11 @@ describe("JMP messages", function() {
         return;
 
         function getRequest(message) {
+            assert.equal(
+                message.buffers.length, request.buffers.length,
+                "Wrong number of frames in message.buffers"
+            );
+
             assert.equal(
                 message.idents[0],
                 context.clientSocket.getsockopt(zmq.ZMQ_IDENTITY),
