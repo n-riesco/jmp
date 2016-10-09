@@ -34,15 +34,31 @@
  *
  */
 
-DEBUG = false;
-
 var assert = require("assert");
-var console = require("console");
 var crypto = require("crypto");
+
 var uuid = require("node-uuid");
 
-var jmp = require("../index.js");
+var jmp = require("..");
 var zmq = jmp.zmq;
+
+// Setup logging helpers
+var log;
+var dontLog = function dontLog() {};
+var doLog = function doLog() {
+    process.stderr.write("JMP: TEST:");
+    console.error.apply(this, arguments);
+};
+
+if (process.env.DEBUG) {
+    global.DEBUG = true;
+
+    try {
+        doLog = require("debug")("JMP: TEST:");
+    } catch (err) {}
+}
+
+log = global.DEBUG ? doLog : dontLog;
 
 /**
  * @typedef Context
@@ -55,324 +71,282 @@ var zmq = jmp.zmq;
  *
  */
 
-testNext({}, [
-    createContext,
-    testListeners,
-    testSignature,
-    testCommunication,
-    destroyContext,
-]);
+describe("Listeners", function() {
+    var context = {};
 
-/**
- * @callback Test
- * @param {Context}       context
- * @param {(Test|Test[])} [tests]
- * @description Run a test using context and call the next test in tests
- */
+    before(function() {
+        context.scheme = "sha256";
+        context.key = crypto.randomBytes(256).toString('base64');
 
-/**
- * @type Test
- * @description This function is called by each test to ensure all tests are run
- */
-function testNext(context, tests) {
-    if (!tests) {
-        return;
-    }
-
-    if (!Array.isArray(tests)) {
-        tests(context);
-        return;
-    }
-
-    var test = tests.shift();
-    if (test) {
-        test(context, tests);
-    }
-}
-
-/**
- * @type Test
- * @description Create context for running all the text
- *
- */
-function createContext(context, tests) {
-    console.log("Tests initiated...");
-
-    context.scheme = "sha256";
-    context.key = crypto.randomBytes(256).toString('base64');
-
-    context.serverSocket = new jmp.Socket(
-        "router", context.scheme, context.key
-    );
-
-    context.clientSocket = new jmp.Socket(
-        "dealer", context.scheme, context.key
-    );
-
-    // Assign identity to client socket (only for testing purposes)
-    context.clientSocket.setsockopt(
-        zmq.ZMQ_IDENTITY,
-        new Buffer(uuid.v4(), "ascii")
-    );
-
-    // Bind to a random local port
-    bindServerAndClient(context.serverSocket, context.clientSocket);
-
-    testNext(context, tests);
-}
-
-/**
- * @type Test
- * @description Destroy context
- *
- */
-function destroyContext(context, tests) {
-    console.log("Tests completed.");
-
-    context.serverSocket.close();
-    context.clientSocket.close();
-
-    testNext(context, tests);
-}
-
-/**
- * @type Test
- * @description Test methods for handling listeners
- *
- */
-function testListeners(context, tests) {
-    console.log("Testing listeners...");
-
-    var serverSocket = new jmp.Socket("rep");
-    var clientSocket = new jmp.Socket("req");
-
-    serverSocket.on("message", onServerMessageListener1);
-    serverSocket.on("message", onServerMessageListener2);
-    clientSocket.on("message", onClientMessage);
-    clientSocket.on("close", function() {});
-
-    bindServerAndClient(serverSocket, clientSocket);
-
-    clientSocket.send(new jmp.Message());
-
-    function onServerMessageListener1(message) {
-        if (DEBUG) console.log("Running onServerMessageListener1...");
-
-        onServerMessageListener1.hasRun = true;
-        if (onServerMessageListener2.hasRun) {
-            message.respond(serverSocket);
-        }
-    }
-
-    function onServerMessageListener2(message) {
-        if (DEBUG) console.log("Running onServerMessageListener2...");
-
-        onServerMessageListener2.hasRun = true;
-        if (onServerMessageListener1.hasRun) {
-            message.respond(serverSocket);
-        }
-    }
-
-    function onClientMessage() {
-        if (DEBUG) console.log("Running onClientMessage...");
-
-        clientSocket.close();
-        serverSocket.close();
-
-        serverSocket.removeListener("message", onServerMessageListener1);
-        serverSocket.removeListener("message", onServerMessageListener2);
-        clientSocket.removeAllListeners();
-
-        assert.deepEqual(
-            serverSocket._events, {},
-            "Failed to removed all listeners in serverSocket"
-        );
-        assert.deepEqual(
-            serverSocket._jmp._listeners, [],
-            "Failed to removed all message listeners in serverSocket"
-        );
-        assert.deepEqual(
-            clientSocket._events, {},
-            "Failed to removed all listeners in clientSocket"
-        );
-        assert.deepEqual(
-            clientSocket._jmp._listeners, [],
-            "Failed to removed all message listeners in clientSocket"
+        context.serverSocket = new jmp.Socket(
+            "rep", context.scheme, context.key
         );
 
-        testNext(context, tests);
-    }
-}
+        context.clientSocket = new jmp.Socket(
+            "req", context.scheme, context.key
+        );
 
-/**
- * @type Test
- * @description Test message signature
- *
- */
-function testSignature(context, tests) {
-    console.log("Testing message signature...");
+        // Assign identity to client socket (only for testing purposes)
+        context.clientSocket.setsockopt(
+            zmq.ZMQ_IDENTITY,
+            new Buffer(uuid.v4(), "ascii")
+        );
 
-    var scheme = "sha256";
-    var key = crypto.randomBytes(256).toString('base64');
-    var anotherKey = crypto.randomBytes(256).toString('base64');
-    assert.notEqual(key, anotherKey, "Failed to generate a pair of keys");
-
-    var originalMessage = new jmp.Message();
-    var messageFrames = originalMessage._encode(scheme, key);
-
-    var decodedMessage = jmp.Message._decode(messageFrames, scheme, key);
-    assert.deepEqual(
-        decodedMessage, originalMessage,
-        makeErrorMessage("message", decodedMessage, originalMessage)
-    );
-
-    var malformedMessage = jmp.Message._decode(
-        messageFrames, scheme, anotherKey
-    );
-    assert(!malformedMessage, "Failed to detect a malformed message");
-
-    testNext(context, tests);
-
-    function makeErrorMessage(message, obtained, expected) {
-        return [
-            "testSignature",
-            message,
-            "Obtained", obtained,
-            "Expected", expected,
-        ].join(": ");
-    }
-}
-
-/**
- * @type Test
- * @description Tests communication between a client and a server JMP sockets
- */
-function testCommunication(context, tests) {
-    console.log("Testing communication...");
-
-    var requestMsgType = "kernel_info_request";
-    var responseMsgType = "kernel_info_reply";
-
-    var request = new jmp.Message({
-        header: {
-            "msg_id": uuid.v4(),
-            "username": "user",
-            "session": uuid.v4(),
-            "msg_type": requestMsgType,
-            "version": "5.0",
-        },
+        // Bind to a random local port
+        bindServerAndClient(context.serverSocket, context.clientSocket);
     });
-    assert.notStrictEqual(
-        request.header, {}, "testCommunication: request.header is unset"
-    );
 
-    var responseContent = {
-        "protocol_version": "0.0.0",
-        "implementation": "π",
-        "implementation_version": "0.0.0",
-        "language_info": {
-            "name": "test",
-            "version": "0.0.0",
-            "mimetype": "text/plain",
-            "file_extension": "test",
-        },
-        "banner": "Test",
-        "help_links": [{
-            "text": "JMP",
-            "url": "https://github.com/n-riesco/nel",
-        }],
-    };
-    var responseMetadata = {};
+    it("can be registered, invoked and removed", function(done) {
+        context.serverSocket.on("message", onServerMessageListener1);
+        context.serverSocket.on("message", onServerMessageListener2);
+        context.clientSocket.on("message", onClientMessage);
+        context.clientSocket.on("close", function() {});
 
-    context.serverSocket.on("message", getRequest);
-    context.clientSocket.on("message", getResponse);
+        context.clientSocket.send(new jmp.Message());
 
-    context.clientSocket.send(request);
+        function onServerMessageListener1(message) {
+            log("Running onServerMessageListener1...");
 
-    return;
+            onServerMessageListener1.hasRun = true;
+            if (onServerMessageListener2.hasRun) {
+                message.respond(context.serverSocket);
+            }
+        }
 
-    function getRequest(message) {
-        assert.equal(
-            message.idents[0],
-            context.clientSocket.getsockopt(zmq.ZMQ_IDENTITY),
-            makeErrorMessage(
-                "request.idents",
-                message.idents[0].toString(),
-                context.clientSocket.getsockopt(zmq.ZMQ_IDENTITY).toString()
-            )
+        function onServerMessageListener2(message) {
+            log("Running onServerMessageListener2...");
+
+            onServerMessageListener2.hasRun = true;
+            if (onServerMessageListener1.hasRun) {
+                message.respond(context.serverSocket);
+            }
+        }
+
+        function onClientMessage() {
+            log("Running onClientMessage...");
+
+            context.clientSocket.close();
+            context.serverSocket.close();
+
+            context.serverSocket.removeListener(
+                "message", onServerMessageListener1
+            );
+            context.serverSocket.removeListener(
+                "message", onServerMessageListener2
+            );
+            context.clientSocket.removeAllListeners();
+
+            assert.deepEqual(
+                context.serverSocket._events, {},
+                "Failed to removed all listeners in serverSocket"
+            );
+
+            assert.deepEqual(
+                context.serverSocket._jmp._listeners, [],
+                "Failed to removed all message listeners in serverSocket"
+            );
+
+            assert.deepEqual(
+                context.clientSocket._events, {},
+                "Failed to removed all listeners in clientSocket"
+            );
+
+            assert.deepEqual(
+                context.clientSocket._jmp._listeners, [],
+                "Failed to removed all message listeners in clientSocket"
+            );
+
+            done();
+        }
+    });
+});
+
+describe("JMP messages", function() {
+    var context = {};
+
+    before(function() {
+        context.scheme = "sha256";
+        context.key = crypto.randomBytes(256).toString('base64');
+
+        context.serverSocket = new jmp.Socket(
+            "router", context.scheme, context.key
+        );
+
+        context.clientSocket = new jmp.Socket(
+            "dealer", context.scheme, context.key
+        );
+
+        // Assign identity to client socket (only for testing purposes)
+        context.clientSocket.setsockopt(
+            zmq.ZMQ_IDENTITY,
+            new Buffer(uuid.v4(), "ascii")
+        );
+
+        // Bind to a random local port
+        bindServerAndClient(context.serverSocket, context.clientSocket);
+    });
+
+    after(function() {
+        context.serverSocket.close();
+        context.clientSocket.close();
+    });
+
+    it("can be validated", function() {
+        var anotherKey = crypto.randomBytes(256).toString('base64');
+        assert.notEqual(
+            context.key, anotherKey, "Failed to generate a pair of keys"
+        );
+
+        var originalMessage = new jmp.Message();
+        var messageFrames = originalMessage._encode(
+            context.scheme, context.key
+        );
+
+        var decodedMessage = jmp.Message._decode(
+            messageFrames, context.scheme, context.key
         );
         assert.deepEqual(
-            message.header, request.header,
-            makeErrorMessage("request.header", message.header, request.header)
-        );
-        assert.deepEqual(
-            message.parent_header, request.parent_header,
+            decodedMessage, originalMessage,
             makeErrorMessage(
-                "request.parent_header",
-                message.parent_header, request.parent_header
-            )
-        );
-        assert.deepEqual(
-            message.metadata, request.metadata,
-            makeErrorMessage(
-                "request.metadata", message.metadata, request.metadata
-            )
-        );
-        assert.deepEqual(
-            message.content, request.content,
-            makeErrorMessage(
-                "request.content", message.content, request.content
+                "Failed signature validation", decodedMessage, originalMessage
             )
         );
 
-        message.respond(
-            context.serverSocket,
-            responseMsgType, responseContent, responseMetadata
+        var malformedMessage = jmp.Message._decode(
+            messageFrames, context.scheme, anotherKey
         );
-    }
+        assert(!malformedMessage, "Failed to detect a malformed message");
+    });
 
-    function getResponse(message) {
-        assert.equal(
-            message.idents.length,
-            0,
-            makeErrorMessage("response.idents.length", message.idents.length, 0)
-        );
-        assert.deepEqual(
-            message.header.msg_type, responseMsgType,
-            makeErrorMessage(
-                "response.header.msg_type",
-                message.header.msg_type,
-                responseMsgType
-            )
-        );
-        assert.deepEqual(
-            message.parent_header, request.header,
-            makeErrorMessage(
-                "response.parent_header", message.parent_header, request.header
-            )
-        );
-        assert.deepEqual(
-            message.content, responseContent,
-            makeErrorMessage(
-                "response.content", message.content, responseContent
-            )
+    it("can be sent and recieved", function(done) {
+        var requestMsgType = "kernel_info_request";
+        var responseMsgType = "kernel_info_reply";
+
+        var request = new jmp.Message({
+            header: {
+                "msg_id": uuid.v4(),
+                "username": "user",
+                "session": uuid.v4(),
+                "msg_type": requestMsgType,
+                "version": "5.0",
+            },
+        });
+        assert.notStrictEqual(
+            request.header, {}, "request.header is unset"
         );
 
-        context.serverSocket.removeListener("message", getRequest);
-        context.clientSocket.removeListener("message", getResponse);
+        var responseContent = {
+            "protocol_version": "0.0.0",
+            "implementation": "π",
+            "implementation_version": "0.0.0",
+            "language_info": {
+                "name": "test",
+                "version": "0.0.0",
+                "mimetype": "text/plain",
+                "file_extension": "test",
+            },
+            "banner": "Test",
+            "help_links": [{
+                "text": "JMP",
+                "url": "https://github.com/n-riesco/nel",
+            }],
+        };
+        var responseMetadata = {};
 
-        testNext(context, tests);
-    }
+        context.serverSocket.on("message", getRequest);
+        context.clientSocket.on("message", getResponse);
 
-    function makeErrorMessage(message, obtained, expected) {
-        return [
-            "testCommunication",
-            message,
-            "Obtained", obtained,
-            "Expected", expected,
-        ].join(": ");
-    }
-}
+        context.clientSocket.send(request);
+
+        return;
+
+        function getRequest(message) {
+            assert.equal(
+                message.idents[0],
+                context.clientSocket.getsockopt(zmq.ZMQ_IDENTITY),
+                makeErrorMessage(
+                    "Wrong request.idents",
+                    message.idents[0].toString(),
+                    context.clientSocket.getsockopt(zmq.ZMQ_IDENTITY).toString()
+                )
+            );
+
+            assert.deepEqual(
+                message.header, request.header,
+                makeErrorMessage(
+                    "Wrong request.header",
+                    message.header, request.header
+                )
+            );
+
+            assert.deepEqual(
+                message.parent_header, request.parent_header,
+                makeErrorMessage(
+                    "request.parent_header",
+                    message.parent_header, request.parent_header
+                )
+            );
+
+            assert.deepEqual(
+                message.metadata, request.metadata,
+                makeErrorMessage(
+                    "request.metadata", message.metadata, request.metadata
+                )
+            );
+
+            assert.deepEqual(
+                message.content, request.content,
+                makeErrorMessage(
+                    "request.content", message.content, request.content
+                )
+            );
+
+            message.respond(
+                context.serverSocket,
+                responseMsgType, responseContent, responseMetadata
+            );
+        }
+
+        function getResponse(message) {
+            assert.equal(
+                message.idents.length,
+                0,
+                makeErrorMessage(
+                    "Wrong response.idents.length", message.idents.length, 0
+                )
+            );
+
+            assert.deepEqual(
+                message.header.msg_type, responseMsgType,
+                makeErrorMessage(
+                    "Wrong response.header.msg_type",
+                    message.header.msg_type,
+                    responseMsgType
+                )
+            );
+
+            assert.deepEqual(
+                message.parent_header, request.header,
+                makeErrorMessage(
+                    "Wrong response.parent_header",
+                    message.parent_header, request.header
+                )
+            );
+
+            assert.deepEqual(
+                message.content, responseContent,
+                makeErrorMessage(
+                    "Wrong response.content", message.content, responseContent
+                )
+            );
+
+            context.serverSocket.removeListener("message", getRequest);
+            context.clientSocket.removeListener("message", getResponse);
+
+            done();
+        }
+    });
+});
 
 /**
  * Bind server and client through a random port
@@ -397,4 +371,12 @@ function bindServerAndClient(serverSocket, clientSocket) {
             throw new Error("can't bind to any local ports");
         }
     }
+}
+
+function makeErrorMessage(errorMessage, obtained, expected) {
+    return [
+        errorMessage,
+        "Obtained", obtained,
+        "Expected", expected,
+    ].join(": ");
 }
