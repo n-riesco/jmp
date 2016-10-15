@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /*
  * BSD 3-Clause License
  *
