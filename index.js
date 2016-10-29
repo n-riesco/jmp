@@ -34,7 +34,7 @@
 
 var crypto = require("crypto");
 var uuid = require("node-uuid");
-var zmq = require("zmq-prebuilt");
+var zmq = require("zeromq");
 
 var DEBUG = global.DEBUG || false;
 

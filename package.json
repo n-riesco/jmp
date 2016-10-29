@@ -23,7 +23,7 @@
     },
     "dependencies": {
         "node-uuid": "^1.4.2",
-        "zmq-prebuilt": "2.x"
+        "zeromq": "3.x"
     },
     "devDependencies": {
         "debug": "2.x",
