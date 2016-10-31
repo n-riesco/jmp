@@ -8,6 +8,9 @@ Protocol](http://ipython.org/ipython-doc/stable/development/messaging.html) over
 
 ## Anouncements
 
+- Version v0.7.0 depends on `zeromq`. `zmq-prebuilt` has been renamed `zeromq`
+  and is now maintained by the zeromq organisation.
+
 - Version v0.6.0 depends on `zmq-prebuilt` to help with testing.
   See [issue #18](https://github.com/n-riesco/jmp/issues/18).
 
