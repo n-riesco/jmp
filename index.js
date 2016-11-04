@@ -165,6 +165,23 @@ Message.prototype.respond = function(
  * @protected
  */
 Message._decode = function(messageFrames, scheme, key) {
+    // Workaround for Buffer.toString failure caused by exceeding the maximum
+    // supported length in V8.
+    //
+    // See issue #4266 https://github.com/nodejs/node/issues/4266
+    // and PR #4394 https://github.com/nodejs/node/pull/4394
+    try {
+        return _decode(messageFrames, scheme, key);
+    } catch (err) {
+        if(!toStringRE.test(err.message)) throw err;
+    }
+
+    return null;
+};
+
+var toStringRE = /toString failed/;
+
+function _decode(messageFrames, scheme, key) {
     scheme = scheme || "sha256";
     key = key || "";
 
@@ -222,7 +239,7 @@ Message._decode = function(messageFrames, scheme, key) {
     function toJSON(value) {
         return JSON.parse(value.toString());
     }
-};
+}
 
 /**
  * Encode message for transfer over a ZMQ socket
