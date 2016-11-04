@@ -173,13 +173,11 @@ Message._decode = function(messageFrames, scheme, key) {
     try {
         return _decode(messageFrames, scheme, key);
     } catch (err) {
-        if(!toStringRE.test(err.message)) throw err;
+        if(err.message !== 'toString failed') throw err;
     }
 
     return null;
 };
-
-var toStringRE = /toString failed/;
 
 function _decode(messageFrames, scheme, key) {
     scheme = scheme || "sha256";
