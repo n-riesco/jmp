@@ -192,6 +192,23 @@ describe("JMP messages", function() {
         context.clientSocket.close();
     });
 
+    it("that throw `toString failed` should be dropped", function() {
+        var message = new jmp.Message();
+
+        var messageFrames = message._encode(
+            context.scheme, context.key
+        );
+        messageFrames.unshift(new Buffer(512 * 1024 * 1024));
+
+        var decodedMessage = jmp.Message._decode(
+            messageFrames, context.scheme, context.key
+        );
+        assert.equal(
+            decodedMessage, null,
+            "Decoding message with a 512Mb buffer should have failed"
+        );
+    });
+
     it("can be validated", function() {
         var anotherKey = crypto.randomBytes(256).toString('base64');
         assert.notEqual(
