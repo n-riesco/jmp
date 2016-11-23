@@ -1,41 +1,41 @@
 {
-    "name": "jmp",
-    "version": "0.7.2",
-    "description": "Node.js module for creating, parsing and replying to messages of the Jupyter Messaging Protocol (JMP)",
-    "keywords": [
-        "jupyter",
-        "messaging",
-        "protocol",
-        "ijavascript"
-    ],
-    "bugs": {
-        "url": "https://github.com/n-riesco/jmp/issues"
-    },
-    "license": "BSD-3-Clause",
-    "author": {
-        "author": "Nicolas Riesco",
-        "email": "enquiries@nicolasriesco.net",
-        "url": "http://www.nicolasriesco.net/"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/n-riesco/jmp.git"
-    },
-    "dependencies": {
-        "node-uuid": "^1.3.0",
-        "zeromq": "^3.2.0"
-    },
-    "devDependencies": {
-        "debug": "2.x",
-        "jsdoc": "latest",
-        "jshint": "latest",
-        "mocha": "3.x"
-    },
-    "scripts": {
-        "doc": "jsdoc -R README.md -d doc index.js",
-        "doc:publish": "node scripts/doc-publish.js doc https://github.com/n-riesco/jmp",
-        "lint": "jshint index.js test/",
-        "test:mocha": "mocha",
-        "test": "npm run lint && npm run test:mocha"
-    }
+  "name": "jmp",
+  "version": "0.7.2",
+  "description": "Node.js module for creating, parsing and replying to messages of the Jupyter Messaging Protocol (JMP)",
+  "keywords": [
+    "jupyter",
+    "messaging",
+    "protocol",
+    "ijavascript"
+  ],
+  "bugs": {
+    "url": "https://github.com/n-riesco/jmp/issues"
+  },
+  "license": "BSD-3-Clause",
+  "author": {
+    "author": "Nicolas Riesco",
+    "email": "enquiries@nicolasriesco.net",
+    "url": "http://www.nicolasriesco.net/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/n-riesco/jmp.git"
+  },
+  "dependencies": {
+    "uuid": "^3.0.0",
+    "zeromq": "^3.2.0"
+  },
+  "devDependencies": {
+    "debug": "2.x",
+    "jsdoc": "latest",
+    "jshint": "latest",
+    "mocha": "3.x"
+  },
+  "scripts": {
+    "doc": "jsdoc -R README.md -d doc index.js",
+    "doc:publish": "node scripts/doc-publish.js doc https://github.com/n-riesco/jmp",
+    "lint": "jshint index.js test/",
+    "test:mocha": "mocha",
+    "test": "npm run lint && npm run test:mocha"
+  }
 }

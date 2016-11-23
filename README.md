@@ -74,7 +74,7 @@ exports the module `zmq`:
 
 ```js
 var crypto = require("crypto");
-var uuid = require("node-uuid");
+var uuid = require("uuid");
 
 var jmp = require("jmp");
 var zmq = jmp.zmq;

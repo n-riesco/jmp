@@ -38,7 +38,7 @@ var assert = require("assert");
 var crypto = require("crypto");
 var util = require("util");
 
-var uuid = require("node-uuid");
+var uuid = require("uuid");
 
 var jmp = require("..");
 var zmq = jmp.zmq;
