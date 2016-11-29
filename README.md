@@ -74,7 +74,7 @@ exports the module `zmq`:
 
 ```js
 var crypto = require("crypto");
-var uuid = require("uuid");
+var uuid = require("uuid/v4");
 
 var jmp = require("jmp");
 var zmq = jmp.zmq;
@@ -102,9 +102,9 @@ var request = new jmp.Message();
 
 request.idents = [];
 request.header = {
-    "msg_id": uuid.v4(),
+    "msg_id": uuid(),
     "username": "user",
-    "session": uuid.v4(),
+    "session": uuid(),
     "msg_type": "kernel_info_request",
     "version": "5.0",
 };
