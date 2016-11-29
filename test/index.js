@@ -38,7 +38,7 @@ var assert = require("assert");
 var crypto = require("crypto");
 var util = require("util");
 
-var uuid = require("node-uuid");
+var uuid = require("uuid/v4");
 
 var jmp = require("..");
 var zmq = jmp.zmq;
@@ -90,7 +90,7 @@ describe("Listeners", function() {
         // Assign identity to client socket (only for testing purposes)
         context.clientSocket.setsockopt(
             zmq.ZMQ_IDENTITY,
-            new Buffer(uuid.v4(), "ascii")
+            new Buffer(uuid(), "ascii")
         );
 
         // Bind to a random local port
@@ -180,7 +180,7 @@ describe("JMP messages", function() {
         // Assign identity to client socket (only for testing purposes)
         context.clientSocket.setsockopt(
             zmq.ZMQ_IDENTITY,
-            new Buffer(uuid.v4(), "ascii")
+            new Buffer(uuid(), "ascii")
         );
 
         // Bind to a random local port
@@ -241,9 +241,9 @@ describe("JMP messages", function() {
         var responseMsgType = "kernel_info_reply";
 
         var requestHeader = {
-            "msg_id": uuid.v4(),
+            "msg_id": uuid(),
             "username": "user",
-            "session": uuid.v4(),
+            "session": uuid(),
             "msg_type": requestMsgType,
             "version": "5.0",
         };

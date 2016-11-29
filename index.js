@@ -33,7 +33,7 @@
  */
 
 var crypto = require("crypto");
-var uuid = require("node-uuid");
+var uuid = require("uuid/v4");
 var zmq = require("zeromq");
 
 var DEBUG = global.DEBUG || false;
@@ -135,7 +135,7 @@ Message.prototype.respond = function(
     response.idents = this.idents;
 
     response.header = {
-        msg_id: uuid.v4(),
+        msg_id: uuid(),
         username: this.header.username,
         session: this.header.session,
         msg_type: messageType,
