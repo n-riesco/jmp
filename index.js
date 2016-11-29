@@ -33,7 +33,7 @@
  */
 
 var crypto = require("crypto");
-var uuid = require("node-uuid");
+var uuid = require("uuid");
 var zmq = require("zeromq");
 
 var DEBUG = global.DEBUG || false;
