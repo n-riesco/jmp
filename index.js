@@ -173,7 +173,7 @@ Message._decode = function(messageFrames, scheme, key) {
     try {
         return _decode(messageFrames, scheme, key);
     } catch (err) {
-        if(err.message !== 'toString failed') throw err;
+        if(err.message.indexOf("toString") === -1) throw err;
     }
 
     return null;
