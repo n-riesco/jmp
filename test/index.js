@@ -219,6 +219,9 @@ describe("Listeners", function() {
 describe("JMP messages", function() {
     var context = {};
 
+    // Use to skip a spec in Node.js v0.x
+    var itIfNotNodeV0 = (process.version.substring(0, 3) === "v0.") ?  xit : it;
+
     before(function() {
         context.scheme = "sha256";
         context.key = crypto.randomBytes(256).toString('base64');
@@ -246,7 +249,9 @@ describe("JMP messages", function() {
         context.clientSocket.close();
     });
 
-    it("that throw `toString failed` should be dropped", function() {
+    // A large `Buffer` makes Node.js v0.x exit with:
+    // FATAL ERROR: CALL_AND_ENTRY_0 Allocation failed - process out of memory
+    itIfNotNodeV0("that throw `toString failed` should be dropped", function() {
         var message = new jmp.Message();
 
         var messageFrames = message._encode(
