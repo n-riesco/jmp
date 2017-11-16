@@ -119,13 +119,14 @@ function Message(properties) {
 }
 
 /**
- * Send a response
+ * Send a response over a given socket
  *
  * @param {module:zmq~Socket} socket Socket over which the response is sent
  * @param {String} messageType       Jupyter response message type
  * @param {Object} [content]         Jupyter response content
  * @param {Object} [metadata]        Jupyter response metadata
  * @param {String} [protocolVersion] Jupyter protocol version
+ * @returns {module:jmp~Message} The response message sent over the given socket
  */
 Message.prototype.respond = function(
     socket, messageType, content, metadata, protocolVersion
@@ -152,6 +153,8 @@ Message.prototype.respond = function(
     response.metadata = metadata || {};
 
     socket.send(response);
+
+    return response;
 };
 
 /**
