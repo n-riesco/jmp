@@ -75,7 +75,7 @@ log = global.DEBUG ? doLog : dontLog;
 describe("Listeners", function() {
     var context = {};
 
-    before(function() {
+    beforeEach(function() {
         context.scheme = "sha256";
         context.key = crypto.randomBytes(256).toString('base64');
 
@@ -155,6 +155,60 @@ describe("Listeners", function() {
             assert.deepEqual(
                 context.clientSocket._jmp._listeners, [],
                 "Failed to removed all message listeners in clientSocket"
+            );
+
+            done();
+        }
+    });
+
+    it("can be registered to be invoked once", function(done) {
+        context.serverSocket.once("message", onServerMessageListener1);
+        context.serverSocket.on("message", onServerMessageListener2);
+        context.clientSocket.on("message", onClientMessage);
+
+        context.clientSocket.send(new jmp.Message());
+
+        return;
+
+        function onClientMessage() {
+            log("Running onClientMessage...");
+            context.clientSocket.send(new jmp.Message());
+        }
+
+        function onServerMessageListener1(message) {
+            log("Running onServerMessageListener1...");
+
+            assert(
+                message instanceof jmp.Message,
+                "onServerMessageListener1 should receive an instance of Message"
+            );
+
+            assert(
+                !onServerMessageListener1.hasRun,
+                "onServerMessageListener1 has been invoked more than once"
+            );
+
+            onServerMessageListener1.hasRun = true;
+        }
+
+        function onServerMessageListener2(message) {
+            log("Running onServerMessageListener2...");
+
+            if (!onServerMessageListener2.hasRun) {
+                onServerMessageListener2.hasRun = true;
+                message.respond(context.serverSocket);
+                return;
+            }
+
+            if (!onServerMessageListener2.hasRunTwice) {
+                onServerMessageListener2.hasRunTwice = true;
+                message.respond(context.serverSocket);
+                return;
+            }
+
+            assert(
+                onServerMessageListener1.hasRun,
+                "onServerMessageListener1 has not been invoked"
             );
 
             done();
