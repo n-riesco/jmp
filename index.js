@@ -363,16 +363,6 @@ Socket.prototype.on = function(event, listener) {
 Socket.prototype.addListener = Socket.prototype.on;
 
 /**
- * Add a one-time listener to the end of the listeners array for the specified
- * event
- *
- * @param {String}   event
- * @param {Function} listener
- * @returns {module:jmp~Socket} `this` to allow chaining
- */
-Socket.prototype.once = Object.getPrototypeOf(Socket.prototype).once;
-
-/**
  * Remove listener from the listeners array for the specified event
  *
  * @param {String}   event
