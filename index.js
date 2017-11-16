@@ -370,22 +370,7 @@ Socket.prototype.addListener = Socket.prototype.on;
  * @param {Function} listener
  * @returns {module:jmp~Socket} `this` to allow chaining
  */
-Socket.prototype.once = function(event, listener) {
-    var p = Object.getPrototypeOf(Socket.prototype);
-
-    if (event !== "message") {
-        return p.once.apply(this, arguments);
-    }
-
-    return p.once.call(this, event, (function() {
-        var message = Message._decode(
-            arguments, this._jmp.scheme, this._jmp.key
-        );
-        if (message) {
-            listener(message);
-        }
-    }).bind(this));
-};
+Socket.prototype.once = Object.getPrototypeOf(Socket.prototype).once;
 
 /**
  * Remove listener from the listeners array for the specified event
