@@ -377,14 +377,29 @@ Socket.prototype.once = function(event, listener) {
         return p.once.apply(this, arguments);
     }
 
-    return p.once.call(this, event, (function() {
-        var message = Message._decode(
-            arguments, this._jmp.scheme, this._jmp.key
-        );
-        if (message) {
-            listener(message);
-        }
-    }).bind(this));
+    var _listener = {
+        unwrapped: listener,
+        wrapped: (function() {
+            var message = Message._decode(
+                arguments, this._jmp.scheme, this._jmp.key
+            );
+
+            if (message) {
+                try {
+                    listener(message);
+                } catch (error) {
+                    Socket.prototype.removeListener.call(this, event, listener);
+                    throw error;
+                }
+            }
+
+            Socket.prototype.removeListener.call(this, event, listener);
+        }).bind(this),
+    };
+
+    this._jmp._listeners.push(_listener);
+
+    return p.on.call(this, event, _listener.wrapped);
 };
 
 /**
