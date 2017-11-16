@@ -8,6 +8,10 @@ Protocol](http://ipython.org/ipython-doc/stable/development/messaging.html) over
 
 ## Anouncements
 
+- Version v1.0.0 is a backwards-compatible change in the API. Now,
+  `Message#respond` returns the response message, so that users can access
+  properties like the response header.
+
 - Version v0.7.0 depends on `zeromq`. `zmq-prebuilt` has been renamed `zeromq`
   and is now maintained by the zeromq organisation.
 
