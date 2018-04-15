@@ -36,7 +36,6 @@
 
 var assert = require("assert");
 var crypto = require("crypto");
-var util = require("util");
 
 var uuid = require("uuid/v4");
 
@@ -77,7 +76,7 @@ describe("Listeners", function() {
 
     beforeEach(function() {
         context.scheme = "sha256";
-        context.key = crypto.randomBytes(256).toString('base64');
+        context.key = crypto.randomBytes(256).toString("base64");
 
         context.serverSocket = new jmp.Socket(
             "rep", context.scheme, context.key
@@ -220,11 +219,11 @@ describe("JMP messages", function() {
     var context = {};
 
     // Use to skip a spec in Node.js v0.x
-    var itIfNotNodeV0 = (process.version.substring(0, 3) === "v0.") ?  xit : it;
+    var itIfNotNodeV0 = (process.version.substring(0, 3) === "v0.") ? xit : it;
 
     before(function() {
         context.scheme = "sha256";
-        context.key = crypto.randomBytes(256).toString('base64');
+        context.key = crypto.randomBytes(256).toString("base64");
 
         context.serverSocket = new jmp.Socket(
             "router", context.scheme, context.key
@@ -269,7 +268,7 @@ describe("JMP messages", function() {
     });
 
     it("can be validated", function() {
-        var anotherKey = crypto.randomBytes(256).toString('base64');
+        var anotherKey = crypto.randomBytes(256).toString("base64");
         assert.notEqual(
             context.key, anotherKey, "Failed to generate a pair of keys"
         );
@@ -306,7 +305,7 @@ describe("JMP messages", function() {
             "msg_type": requestMsgType,
             "version": "5.0",
         };
-        var requestBuffers = [0x2A, "42", Array(42), { 42: 42 }];
+        var requestBuffers = [0x2A, "42", Array(42), {42: 42}];
         var request = new jmp.Message({
             header: requestHeader,
             buffers: requestBuffers,
@@ -449,7 +448,7 @@ describe("JMP messages", function() {
  * @param {module:zmq~Socket} clientSocket Client socket
  */
 function bindServerAndClient(serverSocket, clientSocket) {
-    for (var attempts = 0;; attempts++) {
+    for (var attempts = 0; ; attempts++) {
         var randomPort = Math.floor(1024 + Math.random() * (65536 - 1024));
         var address = "tcp://127.0.0.1:" + randomPort;
 

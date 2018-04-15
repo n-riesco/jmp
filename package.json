@@ -22,19 +22,19 @@
         "url": "https://github.com/n-riesco/jmp.git"
     },
     "dependencies": {
-        "uuid": "^3.0.1",
-        "zeromq": "^4.0.0"
+        "uuid": "3",
+        "zeromq": "4"
     },
     "devDependencies": {
-        "debug": "2.x",
-        "jsdoc": "latest",
-        "jshint": "latest",
-        "mocha": "3.x"
+        "debug": "2",
+        "eslint": "4",
+        "jsdoc": "3",
+        "mocha": "3"
     },
     "scripts": {
         "doc": "jsdoc -R README.md -d doc index.js",
         "doc:publish": "node scripts/doc-publish.js doc https://github.com/n-riesco/jmp",
-        "lint": "jshint index.js test/",
+        "lint": "eslint index.js test",
         "test:mocha": "mocha",
         "test": "npm run lint && npm run test:mocha -- --bail"
     }

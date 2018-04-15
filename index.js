@@ -71,7 +71,7 @@ module.exports = {
     zmq: zmq,
 };
 
-var DELIMITER = '<IDS|MSG>';
+var DELIMITER = "<IDS|MSG>";
 
 /**
  * Jupyter message
@@ -176,7 +176,7 @@ Message._decode = function(messageFrames, scheme, key) {
     try {
         return _decode(messageFrames, scheme, key);
     } catch (err) {
-        if(err.message.indexOf("toString") === -1) throw err;
+        if (err.message.indexOf("toString") === -1) throw err;
     }
 
     return null;
@@ -261,7 +261,7 @@ Message.prototype._encode = function(scheme, key) {
     var metadata = JSON.stringify(this.metadata);
     var content = JSON.stringify(this.content);
 
-    var signature = '';
+    var signature = "";
     if (key) {
         var hmac = crypto.createHmac(scheme, key);
         var encoding = "utf8";
