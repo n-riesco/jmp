@@ -258,12 +258,8 @@ describe("JMP messages", function() {
         );
         messageFrames.unshift(new Buffer(512 * 1024 * 1024));
 
-        var decodedMessage = jmp.Message._decode(
+        jmp.Message._decode(
             messageFrames, context.scheme, context.key
-        );
-        assert.equal(
-            decodedMessage, null,
-            "Decoding message with a 512Mb buffer should have failed"
         );
     });
 
