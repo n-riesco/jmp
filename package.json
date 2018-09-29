@@ -23,7 +23,7 @@
     },
     "dependencies": {
         "uuid": "3",
-        "zeromq": "4"
+        "zeromq": "5"
     },
     "devDependencies": {
         "debug": "2",
