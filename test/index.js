@@ -210,6 +210,9 @@ describe("Listeners", function() {
                 "onServerMessageListener1 has not been invoked"
             );
 
+            context.clientSocket.close();
+            context.serverSocket.close();
+
             done();
         }
     });
