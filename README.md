@@ -8,6 +8,9 @@ Protocol](http://ipython.org/ipython-doc/stable/development/messaging.html) over
 
 ## Anouncements
 
+- Version v2.0.0 does not ship any API changes, but it upgrades to zeromq@5 and
+  thus it requires node v6 or above.
+
 - Version v1.0.0 is a backwards-compatible change in the API. Now,
   `Message#respond` returns the response message, so that users can access
   properties like the response header.
