@@ -26,13 +26,13 @@
         "zeromq": "5"
     },
     "engines": {
-        "node": ">=6.0"
+        "node": ">=6"
     },
     "devDependencies": {
         "debug": "2",
         "eslint": "2",
         "jsdoc": "3",
-        "mocha": "3"
+        "mocha": "5"
     },
     "scripts": {
         "doc": "jsdoc -R README.md -d doc index.js",
