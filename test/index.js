@@ -221,8 +221,10 @@ describe("Listeners", function() {
 describe("JMP messages", function() {
     var context = {};
 
+    var versionMajor = Number(process.versions.node.split(".")[0]);
+
     // Use to skip a spec in Node.js v0.x
-    var itIfNotNodeV0 = (process.version.substring(0, 3) === "v0.") ? xit : it;
+    var itIfNotNodeV0 = (versionMajor === 0) ? xit : it;
 
     before(function() {
         context.scheme = "sha256";
@@ -253,12 +255,15 @@ describe("JMP messages", function() {
 
     // A large `Buffer` makes Node.js v0.x exit with:
     // FATAL ERROR: CALL_AND_ENTRY_0 Allocation failed - process out of memory
-    itIfNotNodeV0("that throw `toString failed` should be dropped", function() {
+    itIfNotNodeV0("that throw an error should be dropped", function() {
         var message = new jmp.Message();
 
         var messageFrames = message._encode(
             context.scheme, context.key
         );
+
+        // The maximum length of a JS string in V8 is 0x1fffffe8 (536870888)
+        // See issue #35676 https://github.com/nodejs/node/issues/35676
         messageFrames.unshift(new Buffer(512 * 1024 * 1024));
 
         jmp.Message._decode(

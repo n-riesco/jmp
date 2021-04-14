@@ -173,10 +173,11 @@ Message._decode = function(messageFrames, scheme, key) {
     //
     // See issue #4266 https://github.com/nodejs/node/issues/4266
     // and PR #4394 https://github.com/nodejs/node/pull/4394
+    // See issue #35676 https://github.com/nodejs/node/issues/35676
     try {
         return _decode(messageFrames, scheme, key);
     } catch (err) {
-        if (err.message.indexOf("toString") === -1) throw err;
+        log("MESSAGE: DECODE: Error:", err);
     }
 
     return null;
