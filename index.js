@@ -159,8 +159,7 @@ Message._decode = function(messageFrames, scheme, key) {
     try {
         return _decode(messageFrames, scheme, key);
     } catch (err) {
-        if (err.message.indexOf("toString") === -1) throw err;
-        if (err.message.indexOf("0x1fffffe8") === -1) throw err;
+        log("MESSAGE: DECODE: Error:", err);
     }
 
     return null;

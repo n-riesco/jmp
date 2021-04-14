@@ -262,16 +262,16 @@ describe("JMP messages", function() {
 
     // A large `Buffer` makes Node.js v0.x exit with:
     // FATAL ERROR: CALL_AND_ENTRY_0 Allocation failed - process out of memory
-    itIfNotNodeV0("that throw `toString failed` should be dropped", function() {
-        // The maximum length a JS string in V8 is 0x1fffffe8 (536870888)
-        // See issue #35676 https://github.com/nodejs/node/issues/35676
-        var length = (versionMajor > 12) ? 0x1fffffe8 : 512 * 1024 * 1024;
+    itIfNotNodeV0("that throw an error should be dropped", function() {
         var message = new jmp.Message();
 
         var messageFrames = message._encode(
             context.scheme, context.key
         );
-        messageFrames.unshift(new Buffer(length));
+
+        // The maximum length of a JS string in V8 is 0x1fffffe8 (536870888)
+        // See issue #35676 https://github.com/nodejs/node/issues/35676
+        messageFrames.unshift(new Buffer(512 * 1024 * 1024));
 
         jmp.Message._decode(
             messageFrames, context.scheme, context.key
