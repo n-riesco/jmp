@@ -97,10 +97,16 @@ describe("Listeners", function() {
     });
 
     it("can be registered, invoked and removed", function(done) {
+        log("Socket events before registering listeners:");
+        log("    serverSocket._events =", context.serverSocket._events);
+        log("    clientSocket._events =", context.clientSocket._events);
         context.serverSocket.on("message", onServerMessageListener1);
         context.serverSocket.on("message", onServerMessageListener2);
         context.clientSocket.on("message", onClientMessage);
         context.clientSocket.on("close", function() {});
+        log("Socket events after registering listeners:");
+        log("    serverSocket._events =", context.serverSocket._events);
+        log("    clientSocket._events =", context.clientSocket._events);
 
         context.clientSocket.send(new jmp.Message());
 
@@ -136,22 +142,23 @@ describe("Listeners", function() {
             );
             context.clientSocket.removeAllListeners();
 
-            assert.deepEqual(
-                context.serverSocket._events, {},
+            assert(
+                !context.serverSocket._events.message,
                 "Failed to removed all listeners in serverSocket"
             );
 
-            assert.deepEqual(
+            assert.deepStrictEqual(
                 context.serverSocket._jmp._listeners, [],
                 "Failed to removed all message listeners in serverSocket"
             );
 
-            assert.deepEqual(
-                context.clientSocket._events, {},
+            assert(
+                !context.clientSocket._events.message &&
+                !context.clientSocket._events.close,
                 "Failed to removed all listeners in clientSocket"
             );
 
-            assert.deepEqual(
+            assert.deepStrictEqual(
                 context.clientSocket._jmp._listeners, [],
                 "Failed to removed all message listeners in clientSocket"
             );

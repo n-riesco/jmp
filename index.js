@@ -34,7 +34,7 @@
 
 var crypto = require("crypto");
 var uuid = require("uuid/v4");
-var zmq = require("zeromq");
+var zmq = require("zeromq/v5-compat");
 
 var DEBUG = global.DEBUG || false;
 
@@ -52,24 +52,6 @@ if (DEBUG) {
         log = function noop() {};
     }
 }
-
-/**
- * @module jmp
- *
- * @description Module `jmp` provides functionality for creating, parsing and
- * replying to messages of the Jupyter protocol. It also provides functionality
- * for networking these messages via {@link module:zmq~Socket ZMQ sockets}.
- *
- */
-module.exports = {
-    Message: Message,
-    Socket: Socket,
-
-    /**
-     * ZeroMQ bindings
-     */
-    zmq: zmq,
-};
 
 var DELIMITER = "<IDS|MSG>";
 
@@ -285,164 +267,187 @@ Message.prototype._encode = function(scheme, key) {
 };
 
 /**
- * @class
- * @classdesc ZMQ socket that parses the Jupyter Messaging Protocol
- *
- * @param {String|Number} socketType ZMQ socket type
- * @param {String} [scheme="sha256"] Hashing scheme
- * @param {String} [key=""] Hashing key
+ * ZMQ socket that parses the Jupyter Messaging Protocol
  */
-function Socket(socketType, scheme, key) {
-    zmq.Socket.call(this, socketType);
-    this._jmp = {
-        scheme: scheme,
-        key: key,
-        _listeners: [],
-    };
-}
-
-Socket.prototype = Object.create(zmq.Socket.prototype);
-Socket.prototype.constructor = Socket;
-
-/**
- * Send the given message.
- *
- * @param {module:jmp~Message|String|Buffer|Array} message
- * @param {Number} flags
- * @returns {module:jmp~Socket} `this` to allow chaining
- *
- */
-Socket.prototype.send = function(message, flags) {
-    var p = Object.getPrototypeOf(Socket.prototype);
-
-    if (message instanceof Message) {
-        log("SOCKET: SEND:", message);
-
-        return p.send.call(
-            this, message._encode(this._jmp.scheme, this._jmp.key), flags
-        );
+class Socket extends zmq.Socket {
+    /**
+     * Create a JMP socket.
+     *
+     * @param {String|Number} socketType ZMQ socket type
+     * @param {String} [scheme="sha256"] Hashing scheme
+     * @param {String} [key=""] Hashing key
+     */
+    constructor(socketType, scheme, key) {
+        super(socketType);
+        this._jmp = {
+            scheme: scheme,
+            key: key,
+            _listeners: [],
+        };
     }
 
-    return p.send.apply(this, arguments);
-};
+    /**
+     * Send the given message.
+     *
+     * @param {module:jmp~Message|String|Buffer|Array} message
+     * @param {Number} flags
+     * @returns {module:jmp~Socket} `this` to allow chaining
+     *
+     */
+    send(message, flags) {
+        var p = Object.getPrototypeOf(Socket.prototype);
 
-/**
- * Add listener to the end of the listeners array for the specified event
- *
- * @param {String}   event
- * @param {Function} listener
- * @returns {module:jmp~Socket} `this` to allow chaining
- */
-Socket.prototype.on = function(event, listener) {
-    var p = Object.getPrototypeOf(Socket.prototype);
+        if (message instanceof Message) {
+            log("SOCKET: SEND:", message);
 
-    if (event !== "message") {
-        return p.on.apply(this, arguments);
-    }
-
-    var _listener = {
-        unwrapped: listener,
-        wrapped: (function() {
-            var message = Message._decode(
-                arguments, this._jmp.scheme, this._jmp.key
+            return p.send.call(
+                this, message._encode(this._jmp.scheme, this._jmp.key), flags
             );
-            if (message) {
-                listener(message);
-            }
-        }).bind(this),
-    };
-    this._jmp._listeners.push(_listener);
-    return p.on.call(this, event, _listener.wrapped);
-};
+        }
 
-/**
- * Add listener to the end of the listeners array for the specified event
- *
- * @method module:jmp~Socket#addListener
- * @param {String}   event
- * @param {Function} listener
- * @returns {module:jmp~Socket} `this` to allow chaining
- */
-Socket.prototype.addListener = Socket.prototype.on;
-
-/**
- * Add a one-time listener to the end of the listeners array for the specified
- * event
- *
- * @param {String}   event
- * @param {Function} listener
- * @returns {module:jmp~Socket} `this` to allow chaining
- */
-Socket.prototype.once = function(event, listener) {
-    var p = Object.getPrototypeOf(Socket.prototype);
-
-    if (event !== "message") {
-        return p.once.apply(this, arguments);
+        return p.send.apply(this, arguments);
     }
 
-    var _listener = {
-        unwrapped: listener,
-        wrapped: (function() {
-            var message = Message._decode(
-                arguments, this._jmp.scheme, this._jmp.key
-            );
+    /**
+     * Add listener to the end of the listeners array for the specified event
+     *
+     * @param {String}   event
+     * @param {Function} listener
+     * @returns {module:jmp~Socket} `this` to allow chaining
+     */
+    on(event, listener) {
+        var p = Object.getPrototypeOf(Socket.prototype);
 
-            if (message) {
-                try {
+        if (event !== "message") {
+            return p.on.apply(this, arguments);
+        }
+
+        var _listener = {
+            unwrapped: listener,
+            wrapped: (function() {
+                var message = Message._decode(
+                    arguments, this._jmp.scheme, this._jmp.key
+                );
+                if (message) {
                     listener(message);
-                } catch (error) {
-                    Socket.prototype.removeListener.call(this, event, listener);
-                    throw error;
                 }
+            }).bind(this),
+        };
+        this._jmp._listeners.push(_listener);
+        return p.on.call(this, event, _listener.wrapped);
+    }
+
+    /**
+     * Add listener to the end of the listeners array for the specified event
+     *
+     * @method module:jmp~Socket#addListener
+     * @param {String}   event
+     * @param {Function} listener
+     * @returns {module:jmp~Socket} `this` to allow chaining
+     */
+    addListener(event, listener) {
+        return this.on(event, listener);
+    }
+
+    /**
+     * Add a one-time listener to the end of the listeners array for the
+     * specified event
+     *
+     * @param {String}   event
+     * @param {Function} listener
+     * @returns {module:jmp~Socket} `this` to allow chaining
+     */
+    once(event, listener) {
+        var p = Object.getPrototypeOf(Socket.prototype);
+
+        if (event !== "message") {
+            return p.once.apply(this, arguments);
+        }
+
+        var _listener = {
+            unwrapped: listener,
+            wrapped: (function() {
+                var message = Message._decode(
+                    arguments, this._jmp.scheme, this._jmp.key
+                );
+
+                if (message) {
+                    try {
+                        listener(message);
+                    } catch (error) {
+                        Socket.prototype.removeListener.call(
+                            this, event, listener
+                        );
+                        throw error;
+                    }
+                }
+
+                Socket.prototype.removeListener.call(this, event, listener);
+            }).bind(this),
+        };
+
+        this._jmp._listeners.push(_listener);
+
+        return p.on.call(this, event, _listener.wrapped);
+    }
+
+    /**
+     * Remove listener from the listeners array for the specified event
+     *
+     * @param {String}   event
+     * @param {Function} listener
+     * @returns {module:jmp~Socket} `this` to allow chaining
+     */
+    removeListener(event, listener) {
+        var p = Object.getPrototypeOf(Socket.prototype);
+
+        if (event !== "message") {
+            return p.removeListener.apply(this, arguments);
+        }
+
+        var length = this._jmp._listeners.length;
+        for (var i = 0; i < length; i++) {
+            var _listener = this._jmp._listeners[i];
+            if (_listener.unwrapped === listener) {
+                this._jmp._listeners.splice(i, 1);
+                return p.removeListener.call(this, event, _listener.wrapped);
             }
+        }
 
-            Socket.prototype.removeListener.call(this, event, listener);
-        }).bind(this),
-    };
-
-    this._jmp._listeners.push(_listener);
-
-    return p.on.call(this, event, _listener.wrapped);
-};
-
-/**
- * Remove listener from the listeners array for the specified event
- *
- * @param {String}   event
- * @param {Function} listener
- * @returns {module:jmp~Socket} `this` to allow chaining
- */
-Socket.prototype.removeListener = function(event, listener) {
-    var p = Object.getPrototypeOf(Socket.prototype);
-
-    if (event !== "message") {
         return p.removeListener.apply(this, arguments);
     }
 
-    var length = this._jmp._listeners.length;
-    for (var i = 0; i < length; i++) {
-        var _listener = this._jmp._listeners[i];
-        if (_listener.unwrapped === listener) {
-            this._jmp._listeners.splice(i, 1);
-            return p.removeListener.call(this, event, _listener.wrapped);
-        }
-    }
+    /**
+     * Remove all listeners, or those for the specified event
+     *
+     * @param {String} [event]
+     * @returns {module:jmp~Socket} `this` to allow chaining
+     */
+    removeAllListeners(event) {
+        var p = Object.getPrototypeOf(Socket.prototype);
 
-    return p.removeListener.apply(this, arguments);
-};
+        if (arguments.length === 0 || event === "message") {
+            this._jmp._listeners.length = 0;
+        }
+
+        return p.removeAllListeners.apply(this, arguments);
+    }
+}
 
 /**
- * Remove all listeners, or those for the specified event
+ * @module jmp
  *
- * @param {String} [event]
- * @returns {module:jmp~Socket} `this` to allow chaining
+ * @description Module `jmp` provides functionality for creating, parsing and
+ * replying to messages of the Jupyter protocol. It also provides functionality
+ * for networking these messages via {@link module:zmq~Socket ZMQ sockets}.
+ *
  */
-Socket.prototype.removeAllListeners = function(event) {
-    var p = Object.getPrototypeOf(Socket.prototype);
+module.exports = {
+    Message: Message,
+    Socket: Socket,
 
-    if (arguments.length === 0 || event === "message") {
-        this._jmp._listeners.length = 0;
-    }
-
-    return p.removeAllListeners.apply(this, arguments);
+    /**
+     * ZeroMQ bindings
+     */
+    zmq: zmq,
 };

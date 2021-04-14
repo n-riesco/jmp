@@ -22,8 +22,9 @@
         "url": "https://github.com/n-riesco/jmp.git"
     },
     "dependencies": {
+        "deasync": "0.1",
         "uuid": "3",
-        "zeromq": "5"
+        "zeromq": "6.0.0-beta.6"
     },
     "engines": {
         "node": ">=10.12"
