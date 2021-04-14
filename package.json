@@ -1,6 +1,6 @@
 {
     "name": "jmp-zeromq6",
-    "version": "3.0.1",
+    "version": "3.1.0",
     "description": "Node.js module for creating, parsing and replying to messages of the Jupyter Messaging Protocol (JMP)",
     "keywords": [
         "jupyter",
