@@ -43,57 +43,89 @@
 
 
     <section>
-        <article><h1>JMP</h1><p><code>jmp</code> is an <a href="https://www.npmjs.com/">npm module</a> for creating, parsing and
+        <article><h1>JMP for zeromq v6</h1>
+<p><code>jmp-zeromq6</code> is an <a href="https://www.npmjs.com/">npm module</a> for testing <code>jmp</code>
+against the upcoming <a href="https://www.npmjs.com/package/zeromq"><code>zeromq@6</code></a>.</p>
+<p><code>jmp</code> is an <a href="https://www.npmjs.com/">npm module</a> for creating, parsing and
 replying to messages of the <a href="http://ipython.org/ipython-doc/stable/development/messaging.html">Jupyter Messaging
 Protocol</a> over
 <a href="http://zeromq.org/bindings:node-js">ZMQ sockets</a>.</p>
-<h2>Anouncements</h2><ul>
-<li><p>Version v2.0.0 does not ship any API changes, but it upgrades to zeromq@5 and
+<h2>Anouncements</h2>
+<ul>
+<li>
+<p>Version v3.0.0 does not ship any API changes, but it upgrades to zeromq@6 and
+thus it requires node v10.2 or above.</p>
+</li>
+<li>
+<p>Version v2.0.0 does not ship any API changes, but it upgrades to zeromq@5 and
 thus it requires node v6 or above.</p>
 </li>
-<li><p>Version v1.0.0 is a backwards-compatible change in the API. Now,
+<li>
+<p>Version v1.0.0 is a backwards-compatible change in the API. Now,
 <code>Message#respond</code> returns the response message, so that users can access
 properties like the response header.</p>
 </li>
-<li><p>Version v0.7.0 depends on <code>zeromq</code>. <code>zmq-prebuilt</code> has been renamed <code>zeromq</code>
+<li>
+<p>Version v0.7.0 depends on <code>zeromq</code>. <code>zmq-prebuilt</code> has been renamed <code>zeromq</code>
 and is now maintained by the zeromq organisation.</p>
 </li>
-<li><p>Version v0.6.0 depends on <code>zmq-prebuilt</code> to help with testing.
+<li>
+<p>Version v0.6.0 depends on <code>zmq-prebuilt</code> to help with testing.
 See <a href="https://github.com/n-riesco/jmp/issues/18">issue #18</a>.</p>
 </li>
-<li><p>Version v0.5.0 is backwards-incompatible. The attribute
+<li>
+<p>Version v0.5.0 is backwards-incompatible. The attribute
 <code>Message#blobs</code> has been renamed to <code>Message#buffers</code>.
 See <a href="https://github.com/n-riesco/jmp/issues/14">issue #14</a>.</p>
 </li>
-<li><p>Version v0.4.0 is backwards-incompatible. The attribute
+<li>
+<p>Version v0.4.0 is backwards-incompatible. The attribute
 <code>Message#signatureOK</code> has been removed.
 See <a href="https://github.com/n-riesco/jmp/issues/10">issue #10</a>.</p>
 </li>
-<li><p>Version v0.2.0 is backwards-incompatible. The attribute <code>Message#parentHeader</code>
+<li>
+<p>Version v0.2.0 is backwards-incompatible. The attribute <code>Message#parentHeader</code>
 has been renamed to
 <a href="http://n-riesco.github.io/jmp/module-jmp-Message.html#parent_header"><code>Message#parent_header</code></a>.
 See <a href="https://github.com/n-riesco/jmp/issues/7">issue #7</a>.</p>
 </li>
-<li><p>Version v0.1.0 is backwards-incompatible. <code>npm</code> packages depending on the
+<li>
+<p>Version v0.1.0 is backwards-incompatible. <code>npm</code> packages depending on the
 initial release of JMP need to update their dependency field:</p>
 </li>
 </ul>
-<pre class="prettyprint source"><code>&quot;jmp&quot;: &quot;&lt;0.1.0&quot;,</code></pre><h2>Install</h2><p>The latest stable release is published on
+<pre class="prettyprint source"><code>&quot;jmp&quot;: &quot;&lt;0.1.0&quot;,
+</code></pre>
+<h2>Install</h2>
+<p>The latest stable release is published on
 <a href="https://www.npmjs.com/package/jmp"><code>npm</code></a> and can be installed by running:</p>
-<pre class="prettyprint source lang-sh"><code>npm install jmp</code></pre><p>The master branch in the <a href="https://github.com/n-riesco/jmp">github repository</a>
+<pre class="prettyprint source lang-sh"><code>npm install jmp
+</code></pre>
+<p>The master branch in the <a href="https://github.com/n-riesco/jmp">github repository</a>
 provides the latest development version and can be installed by:</p>
 <pre class="prettyprint source lang-sh"><code>git clone https://github.com/n-riesco/jmp.git
-npm install ./jmp</code></pre><p>Branch <code>v0.0</code> provides the latest version of JMP, backwards-compatible with the
+npm install ./jmp
+</code></pre>
+<p>Branch <code>v0.0</code> provides the latest version of JMP, backwards-compatible with the
 first release. It can be installed from <code>npm</code>:</p>
-<pre class="prettyprint source lang-sh"><code>npm install &quot;jmp@&lt;0.1.0&quot;</code></pre><p>or github:</p>
+<pre class="prettyprint source lang-sh"><code>npm install &quot;jmp@&lt;0.1.0&quot;
+</code></pre>
+<p>or github:</p>
 <pre class="prettyprint source lang-sh"><code>git clone -b v0.0 https://github.com/n-riesco/jmp.git
-npm install ./jmp</code></pre><h2>Usage</h2><h3>Import modules</h3><p>JMP depends on <a href="http://zeromq.org/bindings:node-js">ZMQ</a> and for convenience JMP
+npm install ./jmp
+</code></pre>
+<h2>Usage</h2>
+<h3>Import modules</h3>
+<p>JMP depends on <a href="http://zeromq.org/bindings:node-js">ZMQ</a> and for convenience JMP
 exports the module <code>zmq</code>:</p>
 <pre class="prettyprint source lang-js"><code>var crypto = require(&quot;crypto&quot;);
 var uuid = require(&quot;uuid/v4&quot;);
 
 var jmp = require(&quot;jmp&quot;);
-var zmq = jmp.zmq;</code></pre><h3>Create JMP sockets</h3><pre class="prettyprint source lang-js"><code>var scheme = &quot;sha256&quot;;
+var zmq = jmp.zmq;
+</code></pre>
+<h3>Create JMP sockets</h3>
+<pre class="prettyprint source lang-js"><code>var scheme = &quot;sha256&quot;;
 var key = crypto.randomBytes(256).toString('base64');
 
 var serverSocket = new jmp.Socket(&quot;router&quot;, scheme, key);
@@ -102,7 +134,10 @@ var clientSocket = new jmp.Socket(&quot;dealer&quot;, scheme, key);
 var address = &quot;tcp://127.0.0.1:8888&quot;;
 
 serverSocket.bindSync(address);
-clientSocket.connect(address);</code></pre><h3>Create a JMP message from scratch</h3><pre class="prettyprint source lang-js"><code>var request = new jmp.Message();
+clientSocket.connect(address);
+</code></pre>
+<h3>Create a JMP message from scratch</h3>
+<pre class="prettyprint source lang-js"><code>var request = new jmp.Message();
 
 request.idents = [];
 request.header = {
@@ -114,7 +149,13 @@ request.header = {
 };
 request.parent_header = {};
 request.metadata = {};
-request.content = {};</code></pre><h3>Send a message over a JMP socket</h3><pre class="prettyprint source lang-js"><code>clientSocket.send(request);</code></pre><h3>Listen on a JMP socket and respond to a message</h3><pre class="prettyprint source lang-js"><code>serverSocket.on(&quot;message&quot;, onRequest);
+request.content = {};
+</code></pre>
+<h3>Send a message over a JMP socket</h3>
+<pre class="prettyprint source lang-js"><code>clientSocket.send(request);
+</code></pre>
+<h3>Listen on a JMP socket and respond to a message</h3>
+<pre class="prettyprint source lang-js"><code>serverSocket.on(&quot;message&quot;, onRequest);
 
 function onRequest(msg) {
     var responseMessageType = &quot;kernel_info_reply&quot;;
@@ -141,11 +182,18 @@ function onRequest(msg) {
     msg.respond(
         serverSocket, responseMessageType, responseContent, reponseMetadata
     );
-}</code></pre><h3>Remove listeners and close sockets</h3><pre class="prettyprint source lang-js"><code>serverSocket.removeListener(&quot;message&quot;, getRequest);
+}
+</code></pre>
+<h3>Remove listeners and close sockets</h3>
+<pre class="prettyprint source lang-js"><code>serverSocket.removeListener(&quot;message&quot;, getRequest);
 serverSocket.close()
-clientSocket.close()</code></pre><h1>Documentation</h1><p>Documentation generated using <a href="http://usejsdoc.org/">JSDoc</a> can be found
+clientSocket.close()
+</code></pre>
+<h1>Documentation</h1>
+<p>Documentation generated using <a href="http://usejsdoc.org/">JSDoc</a> can be found
 <a href="http://n-riesco.github.io/jmp/">here</a>.</p>
-<h1>Contributions</h1><p>First of all, thank you for taking the time to contribute. Please, read
+<h1>Contributions</h1>
+<p>First of all, thank you for taking the time to contribute. Please, read
 <a href="https://github.com/n-riesco/jmp/blob/master/CONTRIBUTING.md">CONTRIBUTING.md</a>
 and use the <a href="https://github.com/n-riesco/jmp/issues">issue tracker</a> for any
 contributions: support requests, bug reports, enhancement requests, pull
@@ -160,13 +208,13 @@ requests, ...</p></article>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-jmp.html">jmp</a></li></ul><h3>Classes</h3><ul><li><a href="module-jmp-Message.html">Message</a></li><li><a href="module-jmp-Socket.html">Socket</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-jmp.html">jmp</a></li></ul><h3>Classes</h3><ul><li><a href="Message.html">Message</a></li><li><a href="Socket.html">Socket</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Oct 02 2018 13:48:45 GMT+0100 (BST)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Apr 14 2021 14:23:17 GMT+0100 (British Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>
