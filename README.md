@@ -1,4 +1,7 @@
-# JMP
+# JMP for zeromq v6
+
+`jmp-zeromq6` is an [npm module](https://www.npmjs.com/) for testing `jmp`
+against the upcoming [`zeromq@6`](https://www.npmjs.com/package/zeromq).
 
 `jmp` is an [npm module](https://www.npmjs.com/) for creating, parsing and
 replying to messages of the [Jupyter Messaging
@@ -7,6 +10,9 @@ Protocol](http://ipython.org/ipython-doc/stable/development/messaging.html) over
 
 
 ## Anouncements
+
+- Version v3.0.0 does not ship any API changes, but it upgrades to zeromq@6 and
+  thus it requires node v10.2 or above.
 
 - Version v2.0.0 does not ship any API changes, but it upgrades to zeromq@5 and
   thus it requires node v6 or above.
