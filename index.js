@@ -34,7 +34,7 @@
 
 var crypto = require("crypto");
 var uuid = require("uuid/v4");
-var zmq = require("zeromq");
+var zmq = require("@aminya/zeromq");
 
 var DEBUG = global.DEBUG || false;
 
