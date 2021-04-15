@@ -23,7 +23,7 @@
     },
     "dependencies": {
         "uuid": "3",
-        "zeromq": "^5"
+        "zeromq": "5.2.4"
     },
     "engines": {
         "node": ">=6"
