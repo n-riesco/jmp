@@ -248,10 +248,10 @@ Message.prototype._encode = function(scheme, key) {
     if (key) {
         var hmac = crypto.createHmac(scheme, key);
         var encoding = "utf8";
-        hmac.update(new Buffer(header, encoding));
-        hmac.update(new Buffer(parent_header, encoding));
-        hmac.update(new Buffer(metadata, encoding));
-        hmac.update(new Buffer(content, encoding));
+        hmac.update(new Buffer.from(header, encoding));
+        hmac.update(new Buffer.from(parent_header, encoding));
+        hmac.update(new Buffer.from(metadata, encoding));
+        hmac.update(new Buffer.from(content, encoding));
         signature = hmac.digest("hex");
     }
 

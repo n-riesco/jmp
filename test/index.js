@@ -89,7 +89,7 @@ describe("Listeners", function() {
         // Assign identity to client socket (only for testing purposes)
         context.clientSocket.setsockopt(
             zmq.ZMQ_IDENTITY,
-            new Buffer(uuid(), "ascii")
+            new Buffer.from(uuid(), "ascii")
         );
 
         // Bind to a random local port
@@ -248,7 +248,7 @@ describe("JMP messages", function() {
         // Assign identity to client socket (only for testing purposes)
         context.clientSocket.setsockopt(
             zmq.ZMQ_IDENTITY,
-            new Buffer(uuid(), "ascii")
+            new Buffer.from(uuid(), "ascii")
         );
 
         // Bind to a random local port
@@ -271,7 +271,7 @@ describe("JMP messages", function() {
 
         // The maximum length of a JS string in V8 is 0x1fffffe8 (536870888)
         // See issue #35676 https://github.com/nodejs/node/issues/35676
-        messageFrames.unshift(new Buffer(512 * 1024 * 1024));
+        messageFrames.unshift(new Buffer.alloc(512 * 1024 * 1024));
 
         jmp.Message._decode(
             messageFrames, context.scheme, context.key
