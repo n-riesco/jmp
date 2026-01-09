@@ -34,7 +34,7 @@
 
 var crypto = require("crypto");
 var uuid = require("uuid/v4");
-var zmq = require("zeromq");
+var zmq = require("zeromq/v5-compat");
 
 var DEBUG = global.DEBUG || false;
 
@@ -61,15 +61,6 @@ if (DEBUG) {
  * for networking these messages via {@link module:zmq~Socket ZMQ sockets}.
  *
  */
-module.exports = {
-    Message: Message,
-    Socket: Socket,
-
-    /**
-     * ZeroMQ bindings
-     */
-    zmq: zmq,
-};
 
 var DELIMITER = "<IDS|MSG>";
 
@@ -293,17 +284,18 @@ Message.prototype._encode = function(scheme, key) {
  * @param {String} [scheme="sha256"] Hashing scheme
  * @param {String} [key=""] Hashing key
  */
-function Socket(socketType, scheme, key) {
-    zmq.Socket.call(this, socketType);
-    this._jmp = {
-        scheme: scheme,
-        key: key,
-        _listeners: [],
-    };
+class Socket extends zmq.Socket {
+    constructor(socketType, scheme, key) {
+        super(socketType);
+
+        this._jmp = {
+            scheme: scheme,
+            key: key,
+            _listeners: [],
+        };
+    }
 }
 
-Socket.prototype = Object.create(zmq.Socket.prototype);
-Socket.prototype.constructor = Socket;
 
 /**
  * Send the given message.
@@ -446,4 +438,14 @@ Socket.prototype.removeAllListeners = function(event) {
     }
 
     return p.removeAllListeners.apply(this, arguments);
+};
+
+module.exports = {
+    Message: Message,
+    Socket: Socket,
+
+    /**
+     * ZeroMQ bindings
+     */
+    zmq: zmq,
 };
