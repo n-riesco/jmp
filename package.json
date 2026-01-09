@@ -1,6 +1,6 @@
 {
     "name": "jmp",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "description": "Node.js module for creating, parsing and replying to messages of the Jupyter Messaging Protocol (JMP)",
     "keywords": [
         "jupyter",
@@ -23,7 +23,7 @@
     },
     "dependencies": {
         "uuid": "3",
-        "zeromq": "5"
+        "zeromq": "6"
     },
     "engines": {
         "node": ">=6"

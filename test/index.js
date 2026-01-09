@@ -136,8 +136,10 @@ describe("Listeners", function() {
             );
             context.clientSocket.removeAllListeners();
 
-            assert.deepEqual(
-                context.serverSocket._events, {},
+            // there is still _flushSend in there so only
+            // check if "message" is gone
+            assert.equal(
+                context.serverSocket._events.message, undefined,
                 "Failed to removed all listeners in serverSocket"
             );
 
